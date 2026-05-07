@@ -902,6 +902,362 @@
   }
 }
 /* ═══ 移动端适配 结束 ═══ */
+/* ═══════════════════════════════════════════════════════════
+   快照 Diff 对比 — 样式
+   ═══════════════════════════════════════════════════════════ */
+
+/* 对比选择模式提示条 */
+.promptlens-diff-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(230, 126, 34, 0.15);
+    border: 1px solid rgba(230, 126, 34, 0.4);
+    border-radius: 8px;
+    animation: promptlens-diff-bar-pulse 2s ease-in-out infinite;
+}
+
+@keyframes promptlens-diff-bar-pulse {
+    0%, 100% { border-color: rgba(230, 126, 34, 0.4); }
+    50% { border-color: rgba(230, 126, 34, 0.8); }
+}
+
+.promptlens-diff-bar-text {
+    font-size: 12px;
+    color: #e67e22;
+    flex: 1;
+    margin-right: 8px;
+}
+
+.promptlens-diff-bar-cancel {
+    background: none;
+    border: 1px solid rgba(230, 126, 34, 0.5);
+    color: #e67e22;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.promptlens-diff-bar-cancel:hover {
+    background: rgba(230, 126, 34, 0.2);
+    border-color: #e67e22;
+}
+
+/* 快照卡片 — 对比选中高亮 */
+.promptlens-snapshot-card.diff-selected {
+    border-color: #e67e22 !important;
+    box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 对比按钮 */
+.promptlens-snap-diff-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    opacity: 0.5;
+    transition: all 0.2s;
+}
+
+.promptlens-snap-diff-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* ═══ Diff 视图 ═══ */
+
+.promptlens-diff-view {
+    padding: 4px;
+}
+
+/*顶部标题栏 */
+.promptlens-diff-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+}
+
+.promptlens-diff-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ddd;
+}
+
+.promptlens-diff-close {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #999;
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.promptlens-diff-close:hover {
+    color: #e74c3c;
+    border-color: rgba(231, 76, 60, 0.4);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* 总结条*/
+.promptlens-diff-summary {
+    text-align: center;
+    padding: 8px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.promptlens-diff-summary.identical {
+    background: rgba(39, 174, 96, 0.12);
+    color: #27ae60;
+    border: 1px solid rgba(39, 174, 96, 0.3);
+}
+
+.promptlens-diff-summary.different {
+    background: rgba(230, 126, 34, 0.12);
+    color: #e67e22;
+    border: 1px solid rgba(230, 126, 34, 0.3);
+}
+
+/* A / B 列头 */
+.promptlens-diff-columns {
+    margin-bottom: 10px;
+}
+
+.promptlens-diff-col-header {
+    display: flex;
+    gap: 8px;
+}
+
+.promptlens-diff-col {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.promptlens-diff-col.a {
+    border-left: 3px solid #e74c3c;
+}
+
+.promptlens-diff-col.b {
+    border-left: 3px solid #27ae60;
+}
+
+.promptlens-diff-col-label {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    line-height: 18px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 6px;
+    color: #fff;
+}
+
+.promptlens-diff-col.a .promptlens-diff-col-label {
+    background: #c0392b;
+}
+
+.promptlens-diff-col.b .promptlens-diff-col-label {
+    background: #27ae60;
+}
+
+.promptlens-diff-col-name {
+    font-size: 12px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.promptlens-diff-col-time {
+    font-size: 10px;
+    color: #666;
+    margin-left: 6px;
+}
+
+/* 分区*/
+.promptlens-diff-section {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.promptlens-diff-section-title {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 条目计数标签 */
+.promptlens-diff-entry-count {
+    display: flex;
+    gap: 6px;
+    font-size: 10px;
+}
+
+.promptlens-diff-entry-count .added {
+    color: #27ae60;
+}
+
+.promptlens-diff-entry-count .removed {
+    color: #e74c3c;
+}
+
+.promptlens-diff-entry-count .unchanged {
+    color: #666;
+}
+
+/* 字段对比行 */
+.promptlens-diff-field {
+    display: flex;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+    gap: 6px;
+}
+
+.promptlens-diff-field + .promptlens-diff-field {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.promptlens-diff-field-label {
+    width: 36px;
+    flex-shrink: 0;
+    color: #777;
+    font-size: 11px;
+}
+
+.promptlens-diff-field-val {
+    color: #bbb;
+    word-break: break-all;
+}
+
+.promptlens-diff-field.changed .promptlens-diff-field-val.old {
+    color: #e74c3c;
+    text-decoration: line-through;opacity: 0.7;
+}
+
+.promptlens-diff-field.changed .promptlens-diff-field-val.new {
+    color: #27ae60;
+    font-weight: 500;
+}
+
+.promptlens-diff-field-arrow {
+    color: #666;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.promptlens-diff-field.same .promptlens-diff-field-val {
+    color: #888;
+}
+
+/* 条目差异列表 */
+.promptlens-diff-entries {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.promptlens-diff-entry {
+    display: flex;
+    align-items: center;
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    gap: 6px;
+}
+
+.promptlens-diff-entry-icon {
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.promptlens-diff-entry.added {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.promptlens-diff-entry.added .promptlens-diff-entry-icon {
+    color: #27ae60;
+}
+
+.promptlens-diff-entry.removed {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+}
+
+.promptlens-diff-entry.removed .promptlens-diff-entry-icon {
+    color: #e74c3c;
+}
+
+.promptlens-diff-entry.unchanged {
+    color: #666;
+}
+
+.promptlens-diff-entry.unchanged .promptlens-diff-entry-icon {
+    color: #555;
+}
+
+/* 评分对比行 */
+.promptlens-diff-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.promptlens-diff-rating-label {
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;background: #555;
+}
+
+.promptlens-diff-rating-stars {
+    color: #e67e22;
+    letter-spacing: 1px;
+}
+
+.promptlens-diff-rating-stars.none {
+    color: #555;
+    font-size: 11px;
+}
 
 
 
