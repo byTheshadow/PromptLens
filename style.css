@@ -407,3 +407,117 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+/* ============================================================
+   Toast 提示
+   ============================================================ */
+#pl-toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--pl-bg-secondary);
+  border: 1px solid var(--pl-accent);
+  color: var(--pl-text-primary);
+  font-size: 12px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  z-index: calc(var(--pl-z) + 10);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+}
+
+#pl-toast.pl-toast-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ============================================================
+   笔记卡片
+   ============================================================ */
+.pl-note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pl-note-content {
+  font-size: 13px;
+  color: var(--pl-text-primary);
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.pl-note-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--pl-text-muted);
+}
+
+.pl-note-time {
+  flex: 1;
+}
+
+.pl-note-source {
+  background: var(--pl-accent-dim);
+  color: var(--pl-accent-hover);
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-size: 10px;
+}
+
+.pl-note-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.pl-note-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--pl-radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--pl-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.pl-note-btn:hover {
+  background: var(--pl-bg-tertiary);
+  color: var(--pl-text-primary);
+}
+
+.pl-note-delete:hover {
+  background: rgba(192, 57, 43, 0.15);
+  color: var(--pl-accent-hover);
+}
+
+/* stat-row（面板内设置页复用） */
+.pl-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--pl-border);
+  font-size: 12px;
+  color: var(--pl-text-secondary);
+}
+
+.pl-stat-row:last-child {
+  border-bottom: none;
+}
+
+.pl-stat-val {
+  font-weight: 600;
+  color: var(--pl-text-primary);
+}
+
