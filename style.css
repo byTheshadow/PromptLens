@@ -568,5 +568,57 @@
     transform: translateY(0) scale(1);
   }
 }
+/* ─── 移动端适配 ─── */
+@media (max-width: 768px) {
+  #promptlens-panel {
+    width: calc(100vw - 16px) !important;
+    height: calc(100vh - 100px) !important;
+    min-width: unset !important;
+    min-height: unset !important;
+    max-width: 100vw !important;
+    left: 8px !important;
+    top: 50px !important;
+    right: auto !important;
+    bottom: auto !important;
+    border-radius: 10px;
+    resize: none;}
+
+  #promptlens-fab {
+    width: 42px;
+    height: 42px;}
+
+  #promptlens-fab .promptlens-fab-icon {
+    font-size: 19px;
+  }
+
+  .promptlens-panel-titlebar {
+    padding: 8px 10px 6px;}
+
+  .promptlens-panel-toolbar {
+    padding: 6px 10px;
+  }
+
+  .promptlens-panel-tags {
+    padding: 4px 10px;
+  }
+
+  .promptlens-panel-content {
+    padding: 8px 10px;
+  }
+
+  .promptlens-panel-statusbar {
+    padding: 5px 10px;
+  }
+
+  .promptlens-panel-tab {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .promptlens-search-input {
+    font-size: 14px; /* 防止 iOS 自动缩放 */
+  }
+}
+/* ═══ 移动端适配 结束 ═══ */
 
 

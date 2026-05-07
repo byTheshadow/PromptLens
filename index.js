@@ -890,14 +890,7 @@
                 </div>
             `;
 
-            const savedPos = Storage.getSettings().panelPos;
-            if (savedPos) {
-                panelEl.style.left = savedPos.left + 'px';
-                panelEl.style.top = savedPos.top + 'px';
-            } else {
-                panelEl.style.left = (window.innerWidth - 440) + 'px';
-                panelEl.style.top = '100px';
-            }
+             this._applyPosition();
 
             document.body.appendChild(panelEl);
 
@@ -907,6 +900,41 @@
 
             Logger.success('浮动面板已创建');
         },
+                // ★ 判断是否为移动端
+        _isMobile() {
+            return window.innerWidth <= 768;
+        },
+
+        // ★ 智能定位：移动端居中，桌面端恢复记忆位置
+        _applyPosition() {
+            if (!panelEl) return;
+
+            if (this._isMobile()) {
+                // 移动端：固定位置，由CSS media query 控制尺寸
+                panelEl.style.left = '8px';
+                panelEl.style.top = '50px';
+                panelEl.style.right = 'auto';
+                panelEl.style.bottom = 'auto';
+                return;
+            }
+
+            // 桌面端：恢复记忆位置，或使用默认位置
+            const savedPos = Storage.getSettings().panelPos;
+            if (savedPos) {
+                //★ 确保记忆位置在可视范围内
+                const safeLeft = Math.max(0, Math.min(savedPos.left, window.innerWidth - 200));
+                const safeTop = Math.max(0, Math.min(savedPos.top, window.innerHeight - 100));
+                panelEl.style.left = safeLeft + 'px';
+                panelEl.style.top = safeTop + 'px';
+            } else {
+                panelEl.style.left = Math.max(10, window.innerWidth - 440) + 'px';
+                panelEl.style.top = '100px';
+            }
+            panelEl.style.right = 'auto';
+            panelEl.style.bottom = 'auto';
+        },
+        // ═══ _applyPosition 结束 ═══
+
 
         _bindEvents() {
             if (!panelEl) return;
@@ -944,13 +972,18 @@
             });
         },
 
-        show() {
+           show() {
             if (!panelEl) return;
+
+            // ★ 每次打开时重新检查位置，确保在可视区域内
+            this._applyPosition();
+
             panelEl.classList.add('visible');
             panelVisible = true;
             this._renderContent();
             this._updateStatusBar();
         },
+
 
         hide() {
             if (!panelEl) return;
