@@ -577,47 +577,53 @@
 
             return snapshot;
         },
-
-        /** 提取当前预设中已启用的条目名称列表 */
+                /** 提取当前预设中已启用的条目名称列表 */
         _getEnabledEntries() {
-            // ★ 多路径尝试获取预设条目
             try {
-                // 路径1: 从事件捕获的_currentPreset 对象
-                if (_currentPreset) {
-                    if (_currentPreset.prompts && Array.isArray(_currentPreset.prompts)) {
-                        const entries = _currentPreset.prompts
-                            .filter(p => p.enabled !== false)
-                            .map(p => p.name || p.identifier || '未命名条目');
-                        if (entries.length > 0) {
-                            Logger.info(`条目来源: _currentPreset.prompts (${entries.length}个)`);
-                            return entries;
+                // ★ 路径1: SillyTavern.getContext().chatCompletionSettings（最可靠）
+                // prompts 是条目定义表（identifier→name），prompt_order 是每个角色的启用状态
+                const ctx = (typeof SillyTavern !== 'undefined') ? SillyTavern.getContext() : null;
+                const settings = ctx?.chatCompletionSettings;
+
+                if (settings?.prompts && settings?.prompt_order) {
+                    // 建立 identifier → name 映射表
+                    const nameMap = {};
+                    settings.prompts.forEach(p => {
+                        if (p.identifier && p.name) {
+                            nameMap[p.identifier] = p.name;
                         }
+                    });
+
+                    // prompt_order 有多个 character_id，取最后一个非 100000 的
+                    // （100000 是全局默认，实际对话用的是角色专属的那个）
+                    let order = null;
+                    const orders = settings.prompt_order;
+                    if (orders.length === 1) {
+                        order = orders[0].order;
+                    } else {
+                        // 优先取非全局的角色专属 order
+                        const charOrder = orders.find(o => o.character_id !== 100000);
+                        order = charOrder ? charOrder.order : orders[orders.length - 1].order;
                     }
 
-                    if (_currentPreset.prompt_order && Array.isArray(_currentPreset.prompt_order)) {
-                        const entries = _currentPreset.prompt_order
-                            .filter(p => p.enabled !== false)
-                            .map(p => p.identifier || '未命名条目');
+                    if (order && order.length > 0) {
+                        const entries = order
+                            .filter(item => item.enabled === true)
+                            .map(item => nameMap[item.identifier] || item.identifier)
+                            .filter(name => name); // 过滤空值
+
                         if (entries.length > 0) {
-                            Logger.info(`条目来源: _currentPreset.prompt_order (${entries.length}个)`);
+                            Logger.info(`条目来源: chatCompletionSettings (${entries.length}个已启用)`);
                             return entries;
                         }
                     }
                 }
 
-                // 路径2: 从 ST 全局变量尝试获取
-                const oaiSettings = window.oai_settings;
-                if (oaiSettings) {
-                    //尝试从 openai_settings 中获取当前预设的prompts
-                    const presetName = _currentPresetName || oaiSettings.preset_settings_openai;
-                    if (presetName && oaiSettings.preset_settings_openai) {
-                        //尝试从 DOM 中的 prompt manager 获取
-                        const promptEntries = this._getEntriesFromDOM();
-                        if (promptEntries.length > 0) {
-                            Logger.info(`条目来源: DOM prompt-manager (${promptEntries.length}个)`);
-                            return promptEntries;
-                        }
-                    }
+                // ★ 路径2: DOM 读取（备用）
+                const domEntries = this._getEntriesFromDOM();
+                if (domEntries.length > 0) {
+                    Logger.info(`条目来源: DOM prompt-manager (${domEntries.length}个)`);
+                    return domEntries;
                 }
 
                 Logger.warn('快照捕获时未能获取 enabledEntries');
@@ -628,26 +634,44 @@
             }
         },
 
-        /** 从 DOM 的 prompt manager 列表中提取已启用条目 */
+        /** 从 DOM 的 prompt manager 列表中提取已启用条目（备用路径） */
         _getEntriesFromDOM() {
             try {
                 const entries = [];
-                // ST 的 prompt manager 列表项
-                const items = document.querySelectorAll('#completion_prompt_manager_list .prompt-manager-entry, #completion_prompt_manager_list .completion_prompt_manager_prompt');
+                const items = document.querySelectorAll(
+                    '#completion_prompt_manager_list li.completion_prompt_manager_prompt'
+                );
+
                 items.forEach(item => {
-                    // 检查是否启用（有 checkbox 或 toggle）
-                    const checkbox = item.querySelector('input[type="checkbox"]');
-                    const isEnabled = checkbox ? checkbox.checked : !item.classList.contains('disabled');
-                    if (isEnabled) {
-                        const nameEl = item.querySelector('.prompt-manager-prompt-name, .completion_prompt_manager_prompt_name, [data-prompt-name]');
-                        const name = nameEl ? (nameEl.textContent || nameEl.dataset.promptName || '').trim() : '';
-                        if (name) {
-                            entries.push(name);
-                        }
+                    // ★ ST 用 fa-toggle-on/off 表示开关状态，没有 checkbox
+                    const toggle = item.querySelector('.prompt-manager-toggle-action');
+                    if (!toggle) return; // marker 类条目没有 toggle，跳过
+
+                    const isEnabled = toggle.classList.contains('fa-toggle-on');
+                    if (!isEnabled) return;
+
+                    // ★ 从 data-pm-name 读取名称（最干净，不含图标文字）
+                    const nameEl = item.querySelector('[data-pm-name]');
+                    if (!nameEl) return;
+
+                    // data-pm-name 可能含 HTML 实体（&nbsp; 等），需要解码
+                    const raw = nameEl.dataset.pmName || '';
+                    const decoded = raw
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/&amp;/g, '&')
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&quot;/g, '"')
+                        .trim();
+
+                    if (decoded) {
+                        entries.push(decoded);
                     }
                 });
+
                 return entries;
             } catch (err) {
+                Logger.error('DOM 条目读取失败', err);
                 return [];
             }
         },
