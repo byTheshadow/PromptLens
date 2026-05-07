@@ -777,8 +777,9 @@
                 // ★★★ 核心修复：启动时主动读取当前环境状态 ★★★
                 this._readCurrentState();
 
-                const eventSource = window.eventSource || (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
-                const eventTypes = window.event_types || (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
+                const ctx = SillyTavern.getContext();
+const eventSource = ctx?.eventSource || window.eventSource;
+const eventTypes  = ctx?.eventTypes  || window.event_types;
 
                 if (!eventSource || !eventTypes) {
                     Logger.warn('未找到 SillyTavern 事件系统，快照功能将仅依赖 DOM 读取');
@@ -2469,10 +2470,10 @@ const ThinkingCapture = {
     init() {
     // 延迟重试，等待 ST 事件系统就绪
     const tryInit = (retries = 0) => {
-        const eventSource = window.eventSource ||
-            (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
-        const eventTypes = window.event_types ||
-            (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
+        const ctx = SillyTavern.getContext();
+const eventSource = ctx?.eventSource || window.eventSource;
+const eventTypes  = ctx?.eventTypes  || window.event_types;
+
 
         if (eventSource && eventTypes?.CHARACTER_MESSAGE_RENDERED !== undefined) {
             eventSource.on(eventTypes.CHARACTER_MESSAGE_RENDERED, (mesId) => {
