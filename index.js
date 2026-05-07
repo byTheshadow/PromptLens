@@ -1541,6 +1541,14 @@
                         <span style="position:absolute;inset:0;background:#333;border-radius:22px;transition:background 0.25s;"></span>
                     </label>
                 </div>
+                                <!-- ★ 悬浮球开关 -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+                    <label style="font-size:13px;font-weight:500;">显示悬浮球</label>
+                    <label style="position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;">
+                        <input type="checkbox" id="promptlens-fab-toggle" checked style="opacity:0;width:0;height:0;" />
+                        <span style="position:absolute;inset:0;background:#333;border-radius:22px;transition:background 0.25s;"></span>
+                    </label>
+                </div>
 
                 <div style="padding:8px 0;">
                     <button id="promptlens-open-panel" style="width:100%;padding:9px 0;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
@@ -1583,21 +1591,57 @@
         Logger.success('配置面板已通过降级方案创建');
     }
 
-    function bindSettingsEvents() {
-        //启用开关
+        function bindSettingsEvents() {
+        // ★ 折叠/展开功能
+        const collapseToggle = document.querySelector('#promptlens-collapse-toggle');
+        const collapseBody = document.querySelector('#promptlens-settings-body');
+        const collapseArrow = document.querySelector('#promptlens-collapse-arrow');
+
+        if (collapseToggle && collapseBody && collapseArrow) {
+            // 读取折叠状态
+            const isCollapsed = Storage.getSettings().settingsCollapsed === true;
+            if (isCollapsed) {
+                collapseBody.classList.add('collapsed');
+                collapseArrow.classList.add('collapsed');
+            }
+
+            collapseToggle.addEventListener('click', () => {
+                const nowCollapsed = collapseBody.classList.toggle('collapsed');
+                collapseArrow.classList.toggle('collapsed', nowCollapsed);
+                Storage.updateSettings({ settingsCollapsed: nowCollapsed });
+            });
+        }
+
+        // 启用开关
         const toggle = document.querySelector('#promptlens-toggle');
         if (toggle) {
             toggle.checked = Storage.getSettings().enabled !== false;
             toggle.addEventListener('change', () => {
                 const enabled = toggle.checked;
-                Storage.updateSettings({ enabled });
-                if (enabled) {
+                Storage.updateSettings({ enabled });if (enabled) {
                     pluginEnabled = true;
                     init();
                     Logger.success('插件已重新启用');
                 } else {
                     pluginEnabled = false;
                     shutdown();
+                }
+            });
+        }
+
+        // ★ 悬浮球开关
+        const fabToggle = document.querySelector('#promptlens-fab-toggle');
+        if (fabToggle) {
+            fabToggle.checked = Storage.getSettings().fabVisible !== false;
+            fabToggle.addEventListener('change', () => {
+                const visible = fabToggle.checked;
+                Storage.updateSettings({ fabVisible: visible });
+                if (visible) {
+                    FloatingBall.create();
+                    Logger.info('悬浮球已显示');
+                } else {
+                    FloatingBall.destroy();
+                    Logger.info('悬浮球已隐藏');
                 }
             });
         }
@@ -1610,7 +1654,8 @@
                     Logger.warn('插件未启用，请先打开启用开关');
                     return;
                 }
-                FloatingPanel.show();});
+                FloatingPanel.show();
+            });
         }
 
         // 日志清空
@@ -1666,13 +1711,14 @@
         // 更新统计
         updateSettingsStats();
 
-        // ★ 把之前缓冲的日志重新渲染到刚注入的容器里
+        // 把之前缓冲的日志重新渲染到刚注入的容器里
         logContainerEl = document.querySelector('#promptlens-log-container');
         Logger._renderAll();
     }
+    // ═══ bindSettingsEvents 结束 ═══
 
     // ★ 主初始化
-    function init() {
+       function init() {
         const startTime = performance.now();
         Logger.info(`${PLUGIN_NAME} v${VERSION} 初始化开始...`);
 
@@ -1687,7 +1733,14 @@
         }
 
         EventBridge.init();
-        FloatingBall.create();
+
+        //★ 根据设置决定是否显示悬浮球
+        if (settings.fabVisible !== false) {
+            FloatingBall.create();
+        } else {
+            Logger.info('悬浮球已设置为隐藏');
+        }
+
         FloatingPanel.create();
         SaveBubble.init();
 
@@ -1698,15 +1751,9 @@
         const elapsed = (performance.now() - startTime).toFixed(0);
         Logger.success(`插件初始化完成，耗时 ${elapsed}ms`);
     }
+    // ═══ init 结束 ═══
 
-    function shutdown() {
-        EventBridge.destroy();
-        FloatingBall.destroy();
-        FloatingPanel.destroy();
-        SaveBubble.hide();
-        Logger.info('插件已禁用 —悬浮球已移除, 事件监听已解除');
-    }
-
+    
     // ┌─────────────────────────────────────────────────────────┐
     // │  启动                │
     // └─────────────────────────────────────────────────────────┘

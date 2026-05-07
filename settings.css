@@ -282,4 +282,48 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/* ─── 折叠功能 ─── */
+.promptlens-collapsible-toggle {
+  cursor: pointer;
+  user-select: none;
+  padding: 10px 08px;
+  transition: opacity 0.2s;
+}
+
+.promptlens-collapsible-toggle:hover {
+  opacity: 0.85;
+}
+
+.promptlens-collapse-arrow {
+  font-size: 11px;
+  color: #666;
+  margin-left: auto;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.promptlens-collapse-arrow.collapsed {
+  transform: rotate(-90deg);
+}
+
+.promptlens-settings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.promptlens-settings-body {
+  overflow: hidden;
+  max-height: 2000px;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  opacity: 1;
+}
+
+.promptlens-settings-body.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 
