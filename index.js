@@ -17,7 +17,7 @@
     const STORAGE_KEY = 'PromptLens_data';
     const LOG_MAX = 200;
     const FAB_DEFAULT_POS = { right: 20, bottom: 80 };
-    const DEFAULT_TAGS = ['八股文', '越狱', '人设技巧', '写作手法', '系统提示'];
+    const DEFAULT_TAGS = ['八股文', '越狱', '人设技巧', '写作手法', '系统提示', '思维链'];
     const DRAG_THRESHOLD = 5;
 
     // ★ 关键：ST 插件路径，用于 fetch settings.html
@@ -188,20 +188,22 @@
 
         /** 返回默认数据结构 */
         _defaultData() {
-            return {
-                notes: [],
-                snapshots: [],
-                tags: [...DEFAULT_TAGS],
-                settings: {
-                    enabled: true,
-                    fabVisible: true,
-                    fabPos: { ...FAB_DEFAULT_POS },
-                    panelPos: null,
-                    settingsCollapsed: false,
-                },
-                _version: VERSION,
-            };
+    return {
+        notes: [],
+        snapshots: [],
+        tags: [...DEFAULT_TAGS],
+        settings: {
+            enabled: true,
+            fabVisible: true,
+            fabPos: { ...FAB_DEFAULT_POS },
+            panelPos: null,
+            settingsCollapsed: false,
+            thinkingTagOpen: '<thinking>',   // ★ 思维链开始标签
+            thinkingTagClose: '</thinking>',  // ★ 思维链结束标签
         },
+        _version: VERSION,
+    };
+},
 
         load() {
     try {
@@ -230,13 +232,13 @@
             snapshots: Array.isArray(parsed.snapshots) ? parsed.snapshots : defaults.snapshots,
             tags:      Array.isArray(parsed.tags)      ? parsed.tags      : defaults.tags,
             settings: {
-                ...defaults.settings,
-                ...(parsed.settings || {}),
-                fabPos:   { ...defaults.settings.fabPos,  ...(parsed.settings?.fabPos  || {}) },
-                panelPos: parsed.settings?.panelPos ?? defaults.settings.panelPos,
-            },
-            _version:  parsed._version || VERSION,
-        };
+    ...defaults.settings,
+    ...(parsed.settings || {}),
+    fabPos:   { ...defaults.settings.fabPos,  ...(parsed.settings?.fabPos  || {}) },
+    panelPos: parsed.settings?.panelPos ?? defaults.settings.panelPos,
+    thinkingTagOpen:  parsed.settings?.thinkingTagOpen  ?? defaults.settings.thinkingTagOpen,
+    thinkingTagClose: parsed.settings?.thinkingTagClose ?? defaults.settings.thinkingTagClose,
+},
 
 
         // 补充缺失的默认标签
@@ -2294,12 +2296,225 @@ _renderNoteCard(note) {
     };
 
     // ═══ MODULE 8 SaveBubble 结束 ═══
+    // ┌─────────────────────────────────────────────────────────┐
+// │  MODULE 8b: 思维链捕获 ThinkingCapture                  │
+// └─────────────────────────────────────────────────────────┘
+
+const ThinkingCapture = {
+
+    /**
+     * 从楼层 DOM 中提取思维链内容
+     * @param {string|number} mesId - 楼层 mesid
+     * @returns {string|null} 提取到的思维链文本，未找到返回 null
+     */
+    extractFromFloor(mesId) {
+        try {
+            const mesEl = document.querySelector(`.mes[mesid="${mesId}"]`);
+            if (!mesEl) {
+                Logger.warn(`思维链提取失败 — 未找到楼层 #${mesId}`);
+                return null;
+            }
+
+            // ★ 从消息文本容器取原始文本（包含标签）
+            // ST 的消息内容在 .mes_text 里，但已经过 HTML 渲染
+            // 需要从 mesEl 的 dataset 或原始文本里取
+            const mesTextEl = mesEl.querySelector('.mes_text');
+            if (!mesTextEl) {
+                Logger.warn(`思维链提取失败 — 楼层 #${mesId} 未找到 .mes_text`);
+                return null;
+            }
+
+            // 取 innerText（保留换行，去掉 HTML 标签）
+            const rawText = mesTextEl.innerText || mesTextEl.textContent || '';
+
+            const settings = Storage.getSettings();
+            const tagOpen  = (settings.thinkingTagOpen  || '<thinking>').trim();
+            const tagClose = (settings.thinkingTagClose || '</thinking>').trim();
+
+            return this._extractBetweenTags(rawText, tagOpen, tagClose, mesId);
+        } catch (err) {
+            Logger.error(`思维链提取异常 — 楼层 #${mesId}`, err);
+            return null;
+        }
+    },
+
+    /**
+     * 在文本中提取所有 tagOpen…tagClose 之间的内容
+     * 支持多段（一条消息里有多个思维链块）
+     * @param {string} text
+     * @param {string} tagOpen
+     * @param {string} tagClose
+     * @param {string|number} mesId - 仅用于日志
+     * @returns {string|null}
+     */
+    _extractBetweenTags(text, tagOpen, tagClose, mesId) {
+        const results = [];
+        let searchFrom = 0;
+
+        while (true) {
+            const startIdx = text.indexOf(tagOpen, searchFrom);
+            if (startIdx === -1) break;
+
+            const contentStart = startIdx + tagOpen.length;
+            const endIdx = text.indexOf(tagClose, contentStart);
+
+            if (endIdx === -1) {
+                // 有开始标签但没有结束标签，取到末尾
+                const content = text.slice(contentStart).trim();
+                if (content) results.push(content);
+                break;
+            }
+
+            const content = text.slice(contentStart, endIdx).trim();
+            if (content) results.push(content);
+            searchFrom = endIdx + tagClose.length;
+        }
+
+        if (results.length === 0) {
+            Logger.warn(`思维链提取 — 楼层 #${mesId} 未找到标签 "${tagOpen}...${tagClose}"`);
+            return null;
+        }
+
+        const combined = results.join('\n\n---\n\n');
+        Logger.info(`思维链提取成功 — 楼层 #${mesId}，共 ${results.length} 段，${combined.length} 字符`);
+        return combined;
+    },
+
+    /**
+     * 提取并保存为笔记
+     * @param {string|number} mesId
+     */
+    captureAndSave(mesId) {
+        const content = this.extractFromFloor(mesId);
+        if (!content) {
+            // 给用户一个视觉反馈
+            this._flashButton(mesId, '❌', '#e74c3c');
+            return;
+        }
+
+        NoteManager.add({
+            content,
+            tags: ['思维链'],
+            sourceFloor: parseInt(mesId),
+            sourceMessageId: String(mesId),
+        });
+
+        this._flashButton(mesId, '✓', '#27ae60');
+        Logger.success(`思维链已保存为笔记 — 楼层 #${mesId}`);
+    },
+
+    /**
+     * 按钮点击反馈：短暂改变图标和颜色
+     * @param {string|number} mesId
+     * @param {string} icon
+     * @param {string} color
+     */
+    _flashButton(mesId, icon, color) {
+        const btn = document.querySelector(
+            `.mes[mesid="${mesId}"] .promptlens-thinking-btn`
+        );
+        if (!btn) return;
+        const original = btn.innerHTML;
+        btn.innerHTML = icon;
+        btn.style.color = color;
+        setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.color = '';
+        }, 1500);
+    },
+
+    /**
+     * 向指定楼层注入「收藏思维链」按钮
+     * 幂等：已存在则跳过
+     * @param {string|number} mesId
+     */
+    injectButton(mesId) {
+        try {
+            const mesEl = document.querySelector(`.mes[mesid="${mesId}"]`);
+            if (!mesEl) return;
+
+            // ★ 只给 AI 消息注入（is_user 属性为 false 的楼层）
+            if (mesEl.getAttribute('is_user') === 'true') return;
+
+            const extraBtns = mesEl.querySelector('.extraMesButtons');
+            if (!extraBtns) return;
+
+            // 幂等检查
+            if (extraBtns.querySelector('.promptlens-thinking-btn')) return;
+
+            const btn = document.createElement('div');
+            btn.className = 'mes_button promptlens-thinking-btn';
+            btn.title = '收藏思维链到掠影';
+            btn.innerHTML = '🧠';
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                ThinkingCapture.captureAndSave(mesId);
+            });
+
+            // ★ 插到 extraMesButtons 的第一个位置
+            extraBtns.insertBefore(btn, extraBtns.firstChild);
+
+            Logger.info(`思维链按钮已注入 — 楼层 #${mesId}`);
+        } catch (err) {
+            Logger.error(`思维链按钮注入失败 — 楼层 #${mesId}`, err);
+        }
+    },
+
+    /**
+     * 初始化：监听消息渲染事件 + 补注入已有楼层
+     */
+    init() {
+        try {
+            const eventSource = window.eventSource ||
+                (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
+            const eventTypes = window.event_types ||
+                (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
+
+            if (eventSource && eventTypes?.CHARACTER_MESSAGE_RENDERED !== undefined) {
+                eventSource.on(eventTypes.CHARACTER_MESSAGE_RENDERED, (mesId) => {
+                    if (!pluginEnabled) return;
+                    // ST 传来的 mesId 可能是数字或字符串，统一处理
+                    this.injectButton(String(mesId));
+                });
+                Logger.success('思维链按钮监听已启用 (CHARACTER_MESSAGE_RENDERED)');
+            } else {
+                Logger.warn('思维链：未找到 ST 事件系统，按钮将不会自动注入');
+            }
+
+            // ★ 补注入：对当前页面已有的所有 AI 楼层注入按钮
+            this._injectAll();
+        } catch (err) {
+            Logger.error('ThinkingCapture 初始化失败', err);
+        }
+    },
+
+    /**
+     * 遍历当前页面所有 AI 楼层，补注入按钮
+     */
+    _injectAll() {
+        const allMes = document.querySelectorAll('.mes[mesid]');
+        let count = 0;
+        allMes.forEach(el => {
+            if (el.getAttribute('is_user') === 'true') return;
+            const mesId = el.getAttribute('mesid');
+            if (mesId) {
+                this.injectButton(mesId);
+                count++;
+            }
+        });
+        if (count > 0) {
+            Logger.info(`思维链按钮补注入完成 — 共处理 ${count} 条 AI 消息`);
+        }
+    },
+};
+
+// ═══ MODULE 8b ThinkingCapture 结束 ═══
 
     // ┌─────────────────────────────────────────────────────────┐
     // │  辅助函数                │
     // └─────────────────────────────────────────────────────────┘
 
-    /** 更新 settings 面板中的数据统计 */
     function updateSettingsStats() {
         const noteStatEl = document.querySelector('#promptlens-stat-notes');
         const snapStatEl = document.querySelector('#promptlens-stat-snapshots');
@@ -2446,6 +2661,25 @@ _renderNoteCard(note) {
                 </div>
 
                 <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px 0;"></div>
+                                <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px 0;"></div>
+
+                <div>
+                    <div style="font-size:12px;font-weight:600;color:#999;margin-bottom:8px;">思维链设置</div>
+                    <div style="font-size:12px;color:#666;margin-bottom:10px;">设置思维链的包裹标签，点击楼层的 🧠 按钮可自动提取并收藏</div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                        <label style="font-size:12px;color:#999;white-space:nowrap;width:52px;">开始标签</label>
+                        <input type="text" id="promptlens-thinking-open"
+                            placeholder="<thinking>"
+                            style="flex:1;padding:5px 10px;background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#ccc;font-size:12px;font-family:monospace;" />
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <label style="font-size:12px;color:#999;white-space:nowrap;width:52px;">结束标签</label>
+                        <input type="text" id="promptlens-thinking-close"
+                            placeholder="</thinking>"
+                            style="flex:1;padding:5px 10px;background:#0d0d0d;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#ccc;font-size:12px;font-family:monospace;" />
+                    </div>
+                </div>
+
 
                 <div>
                     <div style="font-size:12px;font-weight:600;color:#999;margin-bottom:8px;">数据管理</div>
@@ -2586,8 +2820,34 @@ toggle.checked = Storage.getSettings().enabled !== false;
             });
         }
 
-        // 更新统计
-        updateSettingsStats();
+        
+                // ★ 思维链标签设置
+        const thinkingOpenInput  = document.querySelector('#promptlens-thinking-open');
+        const thinkingCloseInput = document.querySelector('#promptlens-thinking-close');
+
+        if (thinkingOpenInput) {
+            thinkingOpenInput.value = Storage.getSettings().thinkingTagOpen || '<thinking>';
+            thinkingOpenInput.addEventListener('change', () => {
+                const val = thinkingOpenInput.value.trim();
+                if (val) {
+                    Storage.updateSettings({ thinkingTagOpen: val });
+                    Logger.info(`思维链开始标签已更新: ${val}`);
+                }
+            });
+        }
+        if (thinkingCloseInput) {
+            thinkingCloseInput.value = Storage.getSettings().thinkingTagClose || '</thinking>';
+            thinkingCloseInput.addEventListener('change', () => {
+                const val = thinkingCloseInput.value.trim();
+                if (val) {
+                    Storage.updateSettings({ thinkingTagClose: val });
+                    Logger.info(`思维链结束标签已更新: ${val}`);
+                }
+            });
+        }
+// 更新统计
+        updateSettingsStats();   
+
 
         // 把之前缓冲的日志重新渲染到刚注入的容器里
         logContainerEl = document.querySelector('#promptlens-log-container');
@@ -2625,6 +2885,7 @@ toggle.checked = Storage.getSettings().enabled !== false;
 
         FloatingPanel.create();
         SaveBubble.init();
+        ThinkingCapture.init();
 
         if (SnapshotEngine.hasChanged()) {
             FloatingBall.setChanged(true);
