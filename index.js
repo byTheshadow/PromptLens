@@ -227,18 +227,21 @@
         // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
         // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
         const defaults = this._defaultData();
-        this._data = {
+},
+                this._data = {
             notes:     Array.isArray(parsed.notes)     ? parsed.notes     : defaults.notes,
             snapshots: Array.isArray(parsed.snapshots) ? parsed.snapshots : defaults.snapshots,
             tags:      Array.isArray(parsed.tags)      ? parsed.tags      : defaults.tags,
             settings: {
-    ...defaults.settings,
-    ...(parsed.settings || {}),
-    fabPos:   { ...defaults.settings.fabPos,  ...(parsed.settings?.fabPos  || {}) },
-    panelPos: parsed.settings?.panelPos ?? defaults.settings.panelPos,
-    thinkingTagOpen:  parsed.settings?.thinkingTagOpen  ?? defaults.settings.thinkingTagOpen,
-    thinkingTagClose: parsed.settings?.thinkingTagClose ?? defaults.settings.thinkingTagClose,
-},
+                ...defaults.settings,
+                ...(parsed.settings || {}),
+                fabPos:   { ...defaults.settings.fabPos,  ...(parsed.settings?.fabPos  || {}) },
+                panelPos: parsed.settings?.panelPos ?? defaults.settings.panelPos,
+                thinkingTagOpen:  parsed.settings?.thinkingTagOpen  ?? defaults.settings.thinkingTagOpen,
+                thinkingTagClose: parsed.settings?.thinkingTagClose ?? defaults.settings.thinkingTagClose,
+            },
+            _version: parsed._version || VERSION,
+        };
 
 
         // 补充缺失的默认标签
