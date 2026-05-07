@@ -1,71 +1,44 @@
-/* ============================================================
-   PromptLens 掠影 — 全局样式
-   主色：#0d0d0d（深黑）  强调：#c0392b（暗红）
-   ============================================================ */
+/* ═══════════════════════════════════════════════
+   PromptLens · 掠影 — 悬浮球 +浮动面板全局样式
+   Step 1: 悬浮球 + 面板骨架
+   ═══════════════════════════════════════════════ */
 
-/* ---------- CSS 变量 ---------- */
-:root {
-  --pl-bg-primary:    #111111;
-  --pl-bg-secondary:  #1a1a1a;
-  --pl-bg-tertiary:   #222222;
-  --pl-border:        #2e2e2e;
-  --pl-accent:        #c0392b;
-  --pl-accent-hover:  #e74c3c;
-  --pl-accent-dim:    rgba(192, 57, 43, 0.15);
-  --pl-text-primary:  #f0f0f0;
-  --pl-text-secondary:#999999;
-  --pl-text-muted:    #555555;
-  --pl-radius-sm:     6px;
-  --pl-radius-md:     10px;
-  --pl-radius-lg:     14px;
-  --pl-shadow:        0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
-  --pl-ball-size:     52px;
-  --pl-panel-w:       360px;
-  --pl-panel-h:       540px;
-  --pl-z:             99999;
-}
-
-/* ============================================================
-   悬浮球
-   ============================================================ */
-#pl-ball {
+/* ─── 悬浮球 ─── */
+#promptlens-fab {
   position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: var(--pl-ball-size);
-  height: var(--pl-ball-size);
+  z-index: 10000;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #2a0a08, #0d0d0d);
-  border: 1.5px solid var(--pl-accent);
-  box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.4), var(--pl-shadow);
-  cursor: grab;
-  z-index: var(--pl-z);
+  background: #1a1a1a;
+  border: 2px solid #c0392b;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: grab;
   user-select: none;
-  transition: box-shadow 0.25s ease, transform 0.15s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5), 0 0 0 0rgba(192, 57, 43, 0);
+  transition: box-shadow 0.3s, transform 0.2s;-webkit-tap-highlight-color: transparent;
+  touch-action: none;
 }
 
-#pl-ball:hover {
-  box-shadow: 0 0 0 6px rgba(192, 57, 43, 0.2), var(--pl-shadow);
+#promptlens-fab:hover {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.6), 0 0 16px rgba(192, 57, 43, 0.35);
   transform: scale(1.06);
 }
 
-#pl-ball:active {
+#promptlens-fab:active {
   cursor: grabbing;
-  transform: scale(0.96);
 }
 
-/* 球内图标 */
-#pl-ball .pl-ball-icon {
-  width: 26px;
-  height: 26px;
+#promptlens-fab .promptlens-fab-icon {
+  font-size: 22px;
+  line-height: 1;
   pointer-events: none;
 }
 
-/* 变更提醒角标（P2 预留） */
-#pl-ball .pl-badge {
+/*环境变更角标 */
+#promptlens-fab .promptlens-fab-badge {
   position: absolute;
   top: 2px;
   right: 2px;
@@ -73,451 +46,527 @@
   height: 10px;
   border-radius: 50%;
   background: #e67e22;
-  border: 1.5px solid #0d0d0d;
+  border: 2px solid #1a1a1a;
   display: none;
+  animation: promptlens-badge-pulse 2s infinite;
 }
 
-#pl-ball .pl-badge.visible {
+#promptlens-fab .promptlens-fab-badge.active {
   display: block;
 }
 
-/* ============================================================
-   浮动面板
-   ============================================================ */
-#pl-panel {
+@keyframes promptlens-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── 浮动面板 ─── */
+#promptlens-panel {
   position: fixed;
-  right: 88px;
-  bottom: 24px;
-  width: var(--pl-panel-w);
-  height: var(--pl-panel-h);
-  background: var(--pl-bg-primary);
-  border: 1px solid var(--pl-border);
-  border-radius: var(--pl-radius-lg);
-  box-shadow: var(--pl-shadow);
-  z-index: calc(var(--pl-z) - 1);
-  display: flex;
+  z-index: 10001;
+  width: 420px;
+  height: 560px;
+  min-width: 340px;
+  min-height: 400px;
+  background: rgba(17, 17, 17, 0.95);
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 1px rgba(192, 57, 43, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: none;
   flex-direction: column;
   overflow: hidden;
-  opacity: 0;
-  transform: scale(0.92) translateY(12px);
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  user-select: none;
+  resize: both;
+  font-family: inherit;
+  color: #ccc;
 }
 
-#pl-panel.pl-panel-open {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: all;
+#promptlens-panel.visible {
+  display: flex;
 }
 
-/* 面板顶栏（拖拽区） */
-#pl-panel-header {
+/*顶部红色条 */
+#promptlens-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #c0392b, #e74c3c, #c0392b);
+  border-radius: 12px 12px 0 0;
+}
+
+/* ─── 标题栏 ─── */
+.promptlens-panel-titlebar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px 10px;
-  background: var(--pl-bg-secondary);
-  border-bottom: 1px solid var(--pl-border);
+  padding: 10px 14px 8px;
   cursor: grab;
-  flex-shrink: 0;
+  user-select: none;
+  flex-shrink: 0;border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-#pl-panel-header:active {
+.promptlens-panel-titlebar:active {
   cursor: grabbing;
 }
 
-.pl-panel-title {
+.promptlens-panel-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--pl-text-primary);
-  letter-spacing: 0.3px;
+  color: #e74c3c;
+  flex-shrink: 0;
 }
 
-.pl-panel-title .pl-logo-dot {
+.promptlens-panel-title-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--pl-accent);
-  box-shadow: 0 0 6px var(--pl-accent);
+  background: #c0392b;
+  box-shadow: 0 0 6px rgba(192, 57, 43, 0.5);
 }
 
-/* 关闭按钮 */
-#pl-panel-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--pl-text-secondary);
-  font-size: 16px;
-  cursor: pointer;
+/*标签切换 */
+.promptlens-panel-tabs {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-  flex-shrink: 0;
-}
-
-#pl-panel-close:hover {
-  background: rgba(192, 57, 43, 0.2);
-  color: var(--pl-accent-hover);
-}
-
-/* ============================================================
-   标签页导航
-   ============================================================ */
-#pl-tabs {
-  display: flex;
-  background: var(--pl-bg-secondary);
-  border-bottom: 1px solid var(--pl-border);
-  flex-shrink: 0;
-}
-
-.pl-tab {
-  flex: 1;
-  padding: 9px 4px;
-  border: none;
-  background: transparent;
-  color: var(--pl-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.15s, border-bottom 0.15s;
-  border-bottom: 2px solid transparent;
-  letter-spacing: 0.3px;
-}
-
-.pl-tab:hover {
-  color: var(--pl-text-secondary);
-}
-
-.pl-tab.pl-tab-active {
-  color: var(--pl-accent-hover);
-  border-bottom-color: var(--pl-accent);
-}
-
-/* ============================================================
-   面板内容区
-   ============================================================ */
-#pl-panel-body {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-.pl-tab-pane {
-  position: absolute;
-  inset: 0;
-  overflow-y: auto;
-  padding: 14px;
-  display: none;
-  flex-direction: column;
-  gap: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--pl-border) transparent;
-}
-
-.pl-tab-pane.pl-pane-active {
-  display: flex;
-}
-
-.pl-tab-pane::-webkit-scrollbar {
-  width: 4px;
-}
-
-.pl-tab-pane::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.pl-tab-pane::-webkit-scrollbar-thumb {
-  background: var(--pl-border);
-  border-radius: 2px;
-}
-
-/* 空状态占位 */
-.pl-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 100%;
-  color: var(--pl-text-muted);
-  font-size: 13px;
-  text-align: center;
-  padding: 20px;
-}
-
-.pl-empty-icon {
-  font-size: 32px;
-  opacity: 0.4;
-}
-
-/* ============================================================
-   通用卡片
-   ============================================================ */
-.pl-card {
-  background: var(--pl-bg-secondary);
-  border: 1px solid var(--pl-border);
-  border-radius: var(--pl-radius-md);
-  padding: 12px;
-  font-size: 13px;
-  color: var(--pl-text-primary);
-}
-
-/* ============================================================
-   通用按钮
-   ============================================================ */
-.pl-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--pl-radius-sm);
-  border: none;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-  letter-spacing: 0.3px;
-}
-
-.pl-btn:active {
-  transform: scale(0.96);
-}
-
-.pl-btn-primary {
-  background: var(--pl-accent);
-  color: #fff;
-}
-
-.pl-btn-primary:hover {
-  background: var(--pl-accent-hover);
-}
-
-.pl-btn-ghost {
-  background: transparent;
-  color: var(--pl-text-secondary);
-  border: 1px solid var(--pl-border);
-}
-
-.pl-btn-ghost:hover {
-  background: var(--pl-bg-tertiary);
-  color: var(--pl-text-primary);
-}
-
-/* ============================================================
-   选中文字气泡按钮
-   ============================================================ */
-#pl-selection-bubble {
-  position: fixed;
-  z-index: calc(var(--pl-z) + 1);
-  background: var(--pl-bg-primary);
-  border: 1px solid var(--pl-accent);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pl-accent-hover);
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-  display: none;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  transition: transform 0.1s, box-shadow 0.1s;
-  user-select: none;
-}
-
-#pl-selection-bubble:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(192, 57, 43, 0.3);
-}
-
-#pl-selection-bubble.visible {
-  display: flex;
-}
-
-/* ============================================================
-   移动端适配
-   ============================================================ */
-@media (max-width: 600px) {
-  #pl-panel {
-    right: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 0;
-    transform: translateY(100%);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-  }
-
-  #pl-panel.pl-panel-open {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  #pl-ball {
-    right: 16px;
-    bottom: 16px;
-  }
-}
-
-/* ============================================================
-   Settings 面板（Extensions 侧边栏）
-   ============================================================ */
-#pl-settings-container {
-  padding: 8px 0;
-  font-size: 13px;
-  color: var(--pl-text-primary, #f0f0f0);
-}
-
-.pl-settings-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--pl-accent, #c0392b);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pl-settings-section {
-  margin-bottom: 16px;
-}
-
-.pl-settings-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--pl-text-muted, #555);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-bottom: 8px;
-}
-
-.pl-settings-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-/* ============================================================
-   Toast 提示
-   ============================================================ */
-#pl-toast {
-  position: fixed;
-  bottom: 90px;
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: var(--pl-bg-secondary);
-  border: 1px solid var(--pl-accent);
-  color: var(--pl-text-primary);
-  font-size: 12px;
-  padding: 7px 16px;
-  border-radius: 20px;
-  z-index: calc(var(--pl-z) + 10);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  white-space: nowrap;
-}
-
-#pl-toast.pl-toast-show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ============================================================
-   笔记卡片
-   ============================================================ */
-.pl-note-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pl-note-content {
-  font-size: 13px;
-  color: var(--pl-text-primary);
-  line-height: 1.6;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.pl-note-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--pl-text-muted);
-}
-
-.pl-note-time {
+  gap: 2px;
+  margin-left: 16px;
   flex: 1;
 }
 
-.pl-note-source {
-  background: var(--pl-accent-dim);
-  color: var(--pl-accent-hover);
-  padding: 1px 6px;
-  border-radius: 99px;
-  font-size: 10px;
+.promptlens-panel-tab {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #777;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  border: none;
+  background: none;
 }
 
-.pl-note-actions {
+.promptlens-panel-tab:hover {
+  color: #bbb;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.promptlens-panel-tab.active {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.1);
+}
+
+/*窗口控制按钮 */
+.promptlens-panel-controls {
   display: flex;
   gap: 4px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
-.pl-note-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--pl-radius-sm);
+.promptlens-panel-ctrl-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   border: none;
-  background: transparent;
-  color: var(--pl-text-muted);
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #777;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s, color 0.2s;
 }
 
-.pl-note-btn:hover {
-  background: var(--pl-bg-tertiary);
-  color: var(--pl-text-primary);
+.promptlens-panel-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ccc;
 }
 
-.pl-note-delete:hover {
-  background: rgba(192, 57, 43, 0.15);
-  color: var(--pl-accent-hover);
+.promptlens-panel-ctrl-btn.close:hover {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
 }
 
-/* stat-row（面板内设置页复用） */
-.pl-stat-row {
+/* ─── 工具栏 ─── */
+.promptlens-panel-toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--pl-border);
+  gap: 8px;
+  padding: 8px 14px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.promptlens-search-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.promptlens-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 12px;
-  color: var(--pl-text-secondary);
+  color: #555;
+  pointer-events: none;
 }
 
-.pl-stat-row:last-child {
-  border-bottom: none;
+.promptlens-search-input {
+  width: 100%;
+  padding: 6px 10px 6px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ccc;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-.pl-stat-val {
+.promptlens-search-input::placeholder {
+  color: #555;
+}
+
+.promptlens-search-input:focus {
+  border-color: rgba(192, 57, 43, 0.4);
+}
+
+.promptlens-toolbar-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  background: rgba(192, 57, 43, 0.08);
+  color: #e74c3c;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.promptlens-toolbar-btn:hover {
+  background: rgba(192, 57, 43, 0.18);
+}
+
+/* ─── 标签筛选条 ─── */
+.promptlens-panel-tags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.promptlens-panel-tags::-webkit-scrollbar {
+  display: none;
+}
+
+.promptlens-tag-chip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #888;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.promptlens-tag-chip:hover {
+  color: #bbb;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.promptlens-tag-chip.active {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.12);
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.promptlens-tag-chip.add-tag {
+  color: #555;
+  border-style: dashed;
+}
+
+.promptlens-tag-chip.add-tag:hover {
+  color: #e74c3c;
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+/* ─── 内容区 ─── */
+.promptlens-panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+.promptlens-panel-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.promptlens-panel-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.promptlens-panel-content::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+/*空状态 */
+.promptlens-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: #555;
+  text-align: center;
+}
+
+.promptlens-empty-state-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.promptlens-empty-state-text {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ─── 底部状态栏 ─── */
+.promptlens-panel-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #555;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;user-select: none;
+}
+
+.promptlens-panel-statusbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.promptlens-panel-statusbar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #27ae60;
+}
+
+/* ─── 面板显隐动画 ─── */
+#promptlens-panel {
+  opacity: 0;
+  transform: scale(0.95) translateY(8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+#promptlens-panel.visible {
+  display: flex;
+  opacity: 1;
+  transform: scale(1) translateY(0);pointer-events: auto;
+}
+
+/* ─── 选中收藏气泡（Step 2预留骨架） ─── */
+#promptlens-save-bubble {
+  position: fixed;
+  z-index: 10002;
+  display: none;
+}
+/* ─── 笔记卡片 ─── */
+.promptlens-note-card {background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  position: relative;
+  transition: border-color 0.2s, background0.2s;
+}
+
+.promptlens-note-card:hover {
+  border-color: rgba(192, 57, 43, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.promptlens-card-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ccc;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  margin-bottom: 8px;
+}
+
+.promptlens-card-meta {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.promptlens-card-source {
+  color: #666;
+}
+
+.promptlens-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.promptlens-card-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #c0392b;
+  background: rgba(192, 57, 43, 0.1);
+  border: 1px solid rgba(192, 57, 43, 0.15);
+}
+
+.promptlens-card-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.promptlens-card-actions button {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0.4;
+  transition: opacity 0.2s, background0.2s;
+}
+
+.promptlens-note-card:hover .promptlens-card-actions button,
+.promptlens-snapshot-card:hover .promptlens-card-actions button {
+  opacity: 0.7;
+}
+
+.promptlens-card-actions button:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── 快照卡片 ─── */
+.promptlens-snapshot-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  position: relative;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.promptlens-snapshot-card:hover {
+  border-color: rgba(192, 57, 43, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.promptlens-snap-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.promptlens-snap-icon {
+  font-size: 14px;
+}
+
+.promptlens-snap-preset {
+  font-size: 14px;
   font-weight: 600;
-  color: var(--pl-text-primary);
+  color: #e74c3c;
 }
+
+.promptlens-snap-info {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.promptlens-snap-entries {
+  font-size: 11px;
+  color: #777;
+  margin-bottom: 6px;
+}
+
+.promptlens-snap-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.promptlens-stars {
+  display: flex;
+  gap: 1px;
+}
+
+.promptlens-star {
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.15s, transform 0.15s;
+  user-select: none;
+}
+
+.promptlens-star:hover {
+  transform: scale(1.2);
+}
+
+.promptlens-star.filled {
+  color: #e67e22;
+}
+
+.promptlens-snap-note {
+  font-size: 12px;
+  color: #888;
+  font-style: italic;
+}
+
+/* ─── 气泡弹入动画 ─── */
+@keyframes promptlens-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 

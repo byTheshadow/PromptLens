@@ -1,42 +1,285 @@
-/* Extensions 面板内的补充样式（继承 style.css 变量） */
-#pl-settings-container .pl-btn {
-  font-size: 12px;
-  padding: 6px 12px;
+/*═══════════════════════════════════════════════
+   PromptLens · 掠影— Extensions 面板样式
+   ═══════════════════════════════════════════════ */
+
+/* --- 根容器 --- */
+.promptlens-settings {
+  padding: 12px 04px;
+  font-family: inherit;
+  color: var(--SmartThemeBodyColor, #ccc);
 }
 
-#pl-settings-container .pl-card {
+/* --- 头部 --- */
+.promptlens-settings-header {
+  margin-bottom: 14px;
+}
+
+.promptlens-settings-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.promptlens-settings-icon {
+  font-size: 18px;
+}
+
+.promptlens-settings-name {
+  color: #e74c3c;
+  letter-spacing: -0.3px;
+}
+
+.promptlens-settings-version {
+  font-size: 11px;
+  font-weight: 400;
+  color: #888;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 7px;
+  border-radius: 8px;
+  margin-left: 2px;
+}
+
+.promptlens-settings-subtitle {
   font-size: 12px;
-  padding: 10px;
+  color: #777;
+  margin-top: 3px;
+  font-style: italic;
+}
+
+/* --- 行 --- */
+.promptlens-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.promptlens-settings-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* --- Toggle开关 --- */
+.promptlens-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.promptlens-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.promptlens-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #333;
+  border-radius: 22px;
+  transition: background 0.25s;
+}
+
+.promptlens-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: #888;
+  border-radius: 50%;
+  transition: transform 0.25s, background 0.25s;
+}
+
+.promptlens-toggle-switch input:checked + .promptlens-toggle-slider {
+  background: #c0392b;
+}
+
+.promptlens-toggle-switch input:checked + .promptlens-toggle-slider::before {
+  transform: translateX(20px);
+  background: #fff;
+}
+
+/* --- 主按钮 --- */
+.promptlens-btn-primary {
+  width: 100%;
+  padding: 9px 0;
+  border: none;
+  border-radius: 8px;
+  background: #c0392b;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.promptlens-btn-primary:hover {
+  background: #e74c3c;
+}
+
+.promptlens-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* --- 小按钮 --- */
+.promptlens-btn-sm {
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #bbb;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.promptlens-btn-sm:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.promptlens-btn-danger {
+  color: #e74c3c !important;
+  border-color: rgba(231, 76, 60, 0.25) !important;
+}
+
+.promptlens-btn-danger:hover {
+  background: rgba(231, 76, 60, 0.12) !important;
+  border-color: rgba(231, 76, 60, 0.5) !important;
+}
+
+/* --- 分割线 --- */
+.promptlens-settings-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 12px 0;
+}
+
+/* --- 段落标题 --- */
+.promptlens-settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   margin-bottom: 8px;
 }
 
-.pl-version-badge {
-  display: inline-block;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 99px;
-  background: rgba(192, 57, 43, 0.15);
-  color: #c0392b;
-  border: 1px solid rgba(192, 57, 43, 0.3);
-  margin-left: 6px;
-  vertical-align: middle;
+/* --- 日志容器 --- */
+.promptlens-log-container {
+  background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-height: 220px;
+  min-height: 80px;
+  overflow-y: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
 }
 
-.pl-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--pl-border, #2e2e2e);
-  font-size: 12px;
-  color: var(--pl-text-secondary, #999);
+.promptlens-log-container::-webkit-scrollbar {
+  width: 5px;
 }
 
-.pl-stat-row:last-child {
+.promptlens-log-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.promptlens-log-container::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+.promptlens-log-empty {
+  color: #555;
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+/* 日志条目 */
+.promptlens-log-entry {
+  padding: 1px 0;
+  word-break: break-all;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.promptlens-log-entry:last-child {
   border-bottom: none;
 }
 
-.pl-stat-val {
-  font-weight: 600;
-  color: var(--pl-text-primary, #f0f0f0);
+.promptlens-log-time {
+  color: #555;
+  margin-right: 6px;
+  user-select: none;
 }
+
+.promptlens-log-entry[data-level="info"] .promptlens-log-msg {
+  color: #888;
+}
+
+.promptlens-log-entry[data-level="success"] .promptlens-log-msg {
+  color: #27ae60;
+}
+
+.promptlens-log-entry[data-level="warn"] .promptlens-log-msg {
+  color: #e67e22;
+}
+
+.promptlens-log-entry[data-level="error"] .promptlens-log-msg {
+  color: #e74c3c;
+}
+
+.promptlens-log-stack {
+  color: #e74c3c;
+  opacity: 0.7;
+  padding-left: 24px;
+  font-size: 10px;
+}
+
+/* --- 日志操作 --- */
+.promptlens-log-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* --- 数据统计 --- */
+.promptlens-data-stats {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.promptlens-data-stats strong {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+.promptlens-stat-sep {
+  margin: 0 8px;
+  color: #444;
+}
+
+/* --- 数据操作 --- */
+.promptlens-data-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
