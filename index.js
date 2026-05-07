@@ -2467,29 +2467,33 @@ const ThinkingCapture = {
      * 初始化：监听消息渲染事件 + 补注入已有楼层
      */
     init() {
-        try {
-            const eventSource = window.eventSource ||
-                (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
-            const eventTypes = window.event_types ||
-                (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
+    // 延迟重试，等待 ST 事件系统就绪
+    const tryInit = (retries = 0) => {
+        const eventSource = window.eventSource ||
+            (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
+        const eventTypes = window.event_types ||
+            (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
 
-            if (eventSource && eventTypes?.CHARACTER_MESSAGE_RENDERED !== undefined) {
-                eventSource.on(eventTypes.CHARACTER_MESSAGE_RENDERED, (mesId) => {
-                    if (!pluginEnabled) return;
-                    // ST 传来的 mesId 可能是数字或字符串，统一处理
-                    this.injectButton(String(mesId));
-                });
-                Logger.success('思维链按钮监听已启用 (CHARACTER_MESSAGE_RENDERED)');
-            } else {
-                Logger.warn('思维链：未找到 ST 事件系统，按钮将不会自动注入');
-            }
-
-            // ★ 补注入：对当前页面已有的所有 AI 楼层注入按钮
+        if (eventSource && eventTypes?.CHARACTER_MESSAGE_RENDERED !== undefined) {
+            eventSource.on(eventTypes.CHARACTER_MESSAGE_RENDERED, (mesId) => {
+                if (!pluginEnabled) return;
+                this.injectButton(String(mesId));
+            });
+            Logger.success('思维链按钮监听已启用 (CHARACTER_MESSAGE_RENDERED)');
             this._injectAll();
-        } catch (err) {
-            Logger.error('ThinkingCapture 初始化失败', err);
+        } else if (retries < 10) {
+            // 每 500ms 重试一次，最多 5 秒
+            setTimeout(() => tryInit(retries + 1), 500);
+        } else {
+            Logger.warn('思维链：未找到 ST 事件系统，按钮将不会自动注入');
+            // 即使没有事件系统，也补注入当前已有楼层
+            this._injectAll();
         }
-    },
+    };
+
+    tryInit();
+},
+
 
     /**
      * 遍历当前页面所有 AI 楼层，补注入按钮
