@@ -807,77 +807,138 @@
          * ★★★ 核心新增：主动从 ST DOM / 全局变量读取当前环境状态 ★★★
          *解决：插件启动时事件尚未触发，_currentModel 等全为空的问题
          */
-        _readCurrentState() {
+            _readCurrentState() {
             try {
                 let readCount = 0;
 
-                // ── 读取 API 源 ──
-                // 优先从 ST 全局变量读取
-                if (window.main_api) {
-                    _currentSource = window.main_api;
-                    readCount++;
+                // ══════════════════════════════════════
+                // 第一步：确定 API 源（最重要，决定后续读哪个模型）
+                // ══════════════════════════════════════
+
+                let mainApi = '';
+                let chatCompletionSource = '';
+
+                // 读取主 API 类型（openai / kobold / novel 等）
+                if (window.main_api && typeof window.main_api === 'string') {
+                    mainApi = window.main_api;
                 } else {
-                    // 降级：从 DOM 读取
-                    const apiSelect = document.querySelector('#main_api');
-                    if (apiSelect && apiSelect.value) {
-                        _currentSource = apiSelect.value;
-                        readCount++;
+                    const mainApiEl = document.querySelector('#main_api');
+                    if (mainApiEl) {
+                        mainApi = String(mainApiEl.value || '');
                     }
                 }
 
-                // ── 读取 Chat Completion 源（openai / claude / custom等） ──
-                const chatSourceSelect = document.querySelector('#chat_completion_source');
-                if (chatSourceSelect && chatSourceSelect.value) {
-                    const chatSource = chatSourceSelect.value;
-                    // 如果 main_api 是 openai，则用 chat_completion_source 作为更精确的来源
-                    if (_currentSource === 'openai' || !_currentSource) {
-                        _currentSource = chatSource;}
+                // 读取 Chat Completion 子源（openai / claude / openrouter / custom 等）
+                const chatSourceEl = document.querySelector('#chat_completion_source');
+                if (chatSourceEl) {
+                    chatCompletionSource = String(chatSourceEl.value || '');
                 }
 
-                // ── 读取模型 ──
-                //尝试从 ST 全局变量读取
-                if (window.oai_settings && window.oai_settings.openai_model) {
-                    _currentModel = window.oai_settings.openai_model;
+                // 组合出最终 API 源显示名
+                if (mainApi === 'openai' && chatCompletionSource) {
+                    // main_api 是 "openai" 只代表用的是 Chat Completion 大类
+                    // 真正的源要看 chat_completion_source
+                    _currentSource = chatCompletionSource;
+                    readCount++;
+                } else if (mainApi) {
+                    _currentSource = mainApi;
                     readCount++;
                 }
-                // 降级：从多个可能的 DOM 下拉框读取
-                if (!_currentModel) {
-                    const modelSelectors = [
-                        '#model_openai_select',
-                        '#model_claude_select',
-                        '#model_google_select',
-                        '#model_mistral_select',
-                        '#model_custom_select',
-                        '#openrouter_model',
-                    ];
-                    for (const sel of modelSelectors) {
-                        const el = document.querySelector(sel);
+
+                Logger.info(`API 源读取 — main_api: "${mainApi}", chat_completion_source: "${chatCompletionSource}", 最终: "${_currentSource}"`);
+
+                // ══════════════════════════════════════
+                // 第二步：根据 API 源读取对应的模型
+                // ══════════════════════════════════════
+
+                let modelFound = '';
+
+                // 根据不同的 chat_completion_source 读取对应的模型选择器
+                const sourceModelMap = {
+                    'openai':       ['#model_openai_select'],
+                    'claude':       ['#model_claude_select'],
+                    'google':       ['#model_google_select'],
+                    'openrouter':   ['#openrouter_model'],
+                    'mistralai':    ['#model_mistral_select'],
+                    'custom':       ['#model_custom_select'],
+                    'cohere':       ['#model_cohere_select'],
+                    'perplexity':   ['#model_perplexity_select'],
+                    'groq':         ['#model_groq_select'],
+                    'zerooneai':    ['#model_01ai_select'],
+                    'blockentropy': ['#model_blockentropy_select'],
+                };
+
+                const activeSource = chatCompletionSource || _currentSource || '';
+
+                // 优先：按当前源精确匹配模型选择器
+                if (activeSource && sourceModelMap[activeSource]) {
+                    for (const selector of sourceModelMap[activeSource]) {
+                        const el = document.querySelector(selector);
                         if (el && el.value) {
-                            _currentModel = el.value;
-                            readCount++;
+                            modelFound = String(el.value);
                             break;
                         }
                     }
                 }
 
-                // ── 读取预设名──
-                // 从 ST 全局变量读取
-                if (window.oai_settings && window.oai_settings.preset_settings_openai) {
-                    _currentPresetName = window.oai_settings.preset_settings_openai;
+                // 降级：精确匹配没找到时，遍历所有选择器，只读可见的
+                if (!modelFound) {
+                    const fallbackSelectors = [
+                        '#model_claude_select',
+                        '#model_google_select',
+                        '#openrouter_model',
+                        '#model_mistral_select',
+                        '#model_custom_select',
+                        '#model_cohere_select',
+                        '#model_perplexity_select',
+                        '#model_groq_select',
+                        '#model_01ai_select',
+                        '#model_openai_select', // OpenAI 放最后兜底
+                    ];
+                    for (const sel of fallbackSelectors) {
+                        const el = document.querySelector(sel);
+                        // 只有元素可见时才认为是当前活跃的模型选择器
+                        if (el && el.value && el.offsetParent !== null) {
+                            modelFound = String(el.value);
+                            Logger.info(`模型降级读取 — 从 ${sel} 获取: "${modelFound}"`);
+                            break;
+                        }
+                    }
+                }
+
+                // 再降级：从 ST 全局变量读取，按源区分
+                if (!modelFound && window.oai_settings) {
+                    if (activeSource === 'claude' && window.oai_settings.claude_model) {
+                        modelFound = window.oai_settings.claude_model;
+                    } else if (activeSource === 'openai' && window.oai_settings.openai_model) {
+                        modelFound = window.oai_settings.openai_model;
+                    } else if (activeSource === 'openrouter' && window.oai_settings.openrouter_model) {
+                        modelFound = window.oai_settings.openrouter_model;
+                    }
+                }
+
+                if (modelFound) {
+                    _currentModel = modelFound;
                     readCount++;
                 }
-                // 降级：从 DOM 下拉框读取
-                if (!_currentPresetName) {
-                    const presetSelectors = [
-                        '#settings_preset_openai',
-                        '#settings_preset',];
-                    for (const sel of presetSelectors) {
-                        const el = document.querySelector(sel);
-                        if (el) {
-                            // 获取选中项的文本（而非 value，因为 value 可能是索引）
-                            const selectedOption = el.options ? el.options[el.selectedIndex] : null;
-                            const presetName = selectedOption ? selectedOption.textContent.trim() : el.value;
-                            if (presetName) {
+
+                Logger.info(`模型读取 — 源: "${activeSource}", 模型: "${modelFound || '未获取'}"`);
+
+                // ══════════════════════════════════════
+                // 第三步：读取预设名
+                // ══════════════════════════════════════
+
+                const presetSelectors = [
+                    '#settings_preset_openai',
+                    '#settings_preset',
+                ];
+                for (const sel of presetSelectors) {
+                    const el = document.querySelector(sel);
+                    if (el && el.selectedIndex >= 0) {
+                        const selectedOption = el.options[el.selectedIndex];
+                        if (selectedOption) {
+                            const presetName = selectedOption.textContent.trim();
+                            if (presetName && presetName !== '-- Select a preset --' && presetName !== 'None') {
                                 _currentPresetName = presetName;
                                 readCount++;
                                 break;
@@ -886,9 +947,17 @@
                     }
                 }
 
-                // ── 尝试获取预设对象 ──
+                // 降级：从 ST 全局变量读取
+                if (!_currentPresetName && window.oai_settings && window.oai_settings.preset_settings_openai) {
+                    _currentPresetName = String(window.oai_settings.preset_settings_openai);
+                    readCount++;
+                }
+
+                // ══════════════════════════════════════
+                // 第四步：尝试获取预设对象
+                // ══════════════════════════════════════
+
                 if (!_currentPreset && window.oai_settings) {
-                    // ST 可能把当前预设存在不同的地方
                     if (window.oai_settings.prompts && Array.isArray(window.oai_settings.prompts)) {
                         _currentPreset = { prompts: window.oai_settings.prompts };
                     } else if (window.oai_settings.prompt_order) {
@@ -896,7 +965,8 @@
                     }
                 }
 
-                Logger.info(`环境状态读取完成 — 模型: "${_currentModel || '未获取'}", API: "${_currentSource || '未获取'}", 预设: "${_currentPresetName || '未获取'}" (${readCount}项成功)`);} catch (err) {
+                Logger.info(`环境状态读取完成 — 模型: "${_currentModel || '未获取'}", API: "${_currentSource || '未获取'}", 预设: "${_currentPresetName || '未获取'}" (${readCount}项成功)`);
+            } catch (err) {
                 Logger.error('读取当前环境状态失败', err);
             }
         },
@@ -930,6 +1000,7 @@
             Logger.info('事件监听器已全部移除');
         },
     };
+
 
     // ═══ MODULE 5 EventBridge 结束 ═══
 
