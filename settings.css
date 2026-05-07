@@ -1,0 +1,42 @@
+/* Extensions 面板内的补充样式（继承 style.css 变量） */
+#pl-settings-container .pl-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+#pl-settings-container .pl-card {
+  font-size: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.pl-version-badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: rgba(192, 57, 43, 0.15);
+  color: #c0392b;
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.pl-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--pl-border, #2e2e2e);
+  font-size: 12px;
+  color: var(--pl-text-secondary, #999);
+}
+
+.pl-stat-row:last-child {
+  border-bottom: none;
+}
+
+.pl-stat-val {
+  font-weight: 600;
+  color: var(--pl-text-primary, #f0f0f0);
+}
