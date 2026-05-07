@@ -613,44 +613,70 @@ function plFormatTime(iso) {
 }
 
 // ============================================================
-// 13. Extensions 面板绑定
+// 13. Extensions 配置面板注册（ST 1.15 标准方式）
 // ============================================================
 
-function plInitSettingsPanel() {
-  // 打开主面板按钮
-  const btnOpen = document.getElementById('pl-settings-open-panel');
-  if (btnOpen) {
-    btnOpen.addEventListener('click', () => {
-      plOpenPanel();
-    });
-  }
+async function plInitSettingsPanel() {
+  // ST 提供的扩展名必须和文件夹名一致
+  const EXTENSION_NAME = 'PromptLens';
 
-  // 刷新统计
-  plRefreshStats();
+  try {
+    // 读取 settings.html 内容并注入到 ST 扩展面板
+    const response = await fetch(`/extensions/third-party/${EXTENSION_NAME}/settings.html`);
+    if (!response.ok) {
+      console.warn('[PromptLens] 无法加载 settings.html:', response.status);
+      return;
+    }
+    const html = await response.text();
+
+    // ST 1.15 的扩展面板容器 selector
+    const container = document.getElementById('extensions_settings');
+    if (!container) {
+      console.warn('[PromptLens] 未找到 extensions_settings 容器');
+      return;
+    }
+
+    // 创建扩展面板包装器（ST 标准结构）
+    const wrapper = document.createElement('div');
+    wrapper.id = 'pl-extension-settings';
+    wrapper.innerHTML = html;
+    container.appendChild(wrapper);
+
+    // 绑定面板内的按钮事件
+    const btnOpen = document.getElementById('pl-settings-open-panel');
+    if (btnOpen) {
+      btnOpen.addEventListener('click', () => plOpenPanel());
+    }
+
+    // 刷新统计数据
+    plRefreshStats();
+
+    console.log('[PromptLens] 配置面板已注入');
+  } catch (e) {
+    console.warn('[PromptLens] 配置面板注入失败:', e);
+  }
 }
+
 
 // ============================================================
 // 14. 主入口
 // ============================================================
 
 (function plInit() {
-  // 等待 DOM 就绪
   function onReady() {
-    // 构建 DOM
     const ball   = plCreateBall();
     const panel  = plCreatePanel();
     const bubble = plCreateBubble();
 
-    // 初始化交互
     plInitBallDrag(ball);
     plInitPanelDrag(panel);
     plInitTabs();
     plInitSelectionBubble(bubble);
+
+    // 异步注册配置面板
     plInitSettingsPanel();
 
-    // 悬浮球点击开关面板
     ball.addEventListener('click', (e) => {
-      // 如果是拖拽结束，不触发
       if (ball._wasDragged) {
         ball._wasDragged = false;
         return;
@@ -658,7 +684,6 @@ function plInitSettingsPanel() {
       plTogglePanel();
     });
 
-    // 键盘支持（Enter/Space 触发悬浮球）
     ball.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -666,10 +691,8 @@ function plInitSettingsPanel() {
       }
     });
 
-    // 关闭按钮
     document.getElementById('pl-panel-close')?.addEventListener('click', plClosePanel);
 
-    // 初始渲染笔记列表
     plRenderNotes();
 
     console.log(`[PromptLens] 掠影 v${PL_VERSION} 已加载`);
@@ -681,4 +704,5 @@ function plInitSettingsPanel() {
     onReady();
   }
 })();
+
 
