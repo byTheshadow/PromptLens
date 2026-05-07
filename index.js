@@ -8,7 +8,7 @@
     'use strict';
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE0: 常量& 配置                │
+    // │  MODULE0: 常量& 配置                                   │
     // └─────────────────────────────────────────────────────────┘
 
     const PLUGIN_NAME = 'PromptLens';
@@ -17,15 +17,17 @@
     const STORAGE_KEY = 'PromptLens_data';
     const LOG_MAX = 200;
     const FAB_DEFAULT_POS = { right: 20, bottom: 80 };
-    const PANEL_DEFAULT_POS = { top: 100, left: null }; // left=null 时自动计算
     const DEFAULT_TAGS = ['八股文', '越狱', '人设技巧', '写作手法', '系统提示'];
-    const DRAG_THRESHOLD = 5; // 拖拽判定阈值（px）
+    const DRAG_THRESHOLD = 5;
+
+    // ★ 关键：ST 插件路径，用于 fetch settings.html
+    const EXTENSION_PATH = 'scripts/extensions/third-party/PromptLens';
 
     // 内部状态
     let pluginEnabled = true;
     let panelVisible = false;
-    let currentTab = 'notes'; // 'notes' | 'snapshots'
-    let currentFilterTag = null; // null = 全部
+    let currentTab = 'notes';
+    let currentFilterTag = null;
     let currentSearchKeyword = '';
 
     // 快照引擎追踪状态
@@ -34,13 +36,13 @@
     let _currentPresetName = '';
     let _currentPreset = null;
 
-    // DOM引用缓存
+    // DOM 引用缓存
     let fabEl = null;
     let panelEl = null;
     let logContainerEl = null;
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 1: 日志系统 Logger                                │
+    // │  MODULE 1: 日志系统 Logger│
     // └─────────────────────────────────────────────────────────┘
 
     const Logger = {
@@ -76,23 +78,23 @@
 
             this._logs.push(entry);
 
-            // 裁剪
             if (this._logs.length > LOG_MAX) {
                 this._logs = this._logs.slice(-LOG_MAX);
             }
 
-            // 推送到DOM
             this._renderEntry(entry);
 
-            // 同时输出到浏览器控制台
             const consoleFn = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
             console[consoleFn](`[${PLUGIN_NAME}] ${this._levelIcon(level)} ${message}`, errorObj || '');
         },
 
         _renderEntry(entry) {
+            //★ 每次渲染时重新获取容器引用，因为 settings.html 可能后加载
+            if (!logContainerEl) {
+                logContainerEl = document.querySelector('#promptlens-log-container');
+            }
             if (!logContainerEl) return;
 
-            // 移除空状态提示
             const empty = logContainerEl.querySelector('.promptlens-log-empty');
             if (empty) empty.remove();
 
@@ -112,12 +114,11 @@
             }
 
             logContainerEl.appendChild(div);
-
-            // 自动滚底
             logContainerEl.scrollTop = logContainerEl.scrollHeight;
         },
 
         _renderAll() {
+            logContainerEl = document.querySelector('#promptlens-log-container');
             if (!logContainerEl) return;
             logContainerEl.innerHTML = '';
             if (this._logs.length === 0) {
@@ -142,6 +143,7 @@
 
         clear() {
             this._logs = [];
+            logContainerEl = document.querySelector('#promptlens-log-container');
             if (logContainerEl) {
                 logContainerEl.innerHTML = '<div class="promptlens-log-empty">暂无日志</div>';
             }
@@ -194,7 +196,6 @@
 
                 const parsed = JSON.parse(raw);
 
-                // 版本兼容检查
                 if (!parsed._version) {
                     Logger.warn('数据格式异常（缺少 _version），已重置为默认值');
                     this._data = this._defaultData();
@@ -202,9 +203,7 @@
                     return this._data;
                 }
 
-                // 确保字段完整
                 this._data = Object.assign(this._defaultData(), parsed);
-                // 确保 tags 包含默认标签
                 DEFAULT_TAGS.forEach(tag => {
                     if (!this._data.tags.includes(tag)) {
                         this._data.tags.push(tag);
@@ -233,7 +232,6 @@
                 const sizeKB = (new Blob([json]).size / 1024).toFixed(1);
                 Logger.info(`数据已保存 — 总大小: ${sizeKB} KB`);
 
-                // 更新面板统计
                 updateSettingsStats();return true;
             } catch (err) {
                 if (err.name === 'QuotaExceededError') {
@@ -332,7 +330,7 @@
                         const imported = JSON.parse(e.target.result);
 
                         if (!imported._version) {
-                            Logger.error('导入失败: 文件格式不正确 — 缺少 _version 字段');
+                            Logger.error('导入失败: 文件格式不正确 — 缺少 _version字段');
                             reject(new Error('Invalid format'));
                             return;
                         }
@@ -341,7 +339,6 @@
                             Logger.warn(`导入数据版本不匹配 — 文件: ${imported._version}, 当前: ${VERSION}, 已尝试兼容处理`);
                         }
 
-                        // Merge策略：合并去重
                         let newNotes = 0, newSnaps = 0, newTags = 0;
 
                         if (imported.notes && Array.isArray(imported.notes)) {
@@ -397,7 +394,7 @@
     };
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 3: 笔记管理 NoteManager（Step 2实现，此处骨架）    │
+    // │  MODULE 3: 笔记管理 NoteManager                           │
     // └─────────────────────────────────────────────────────────┘
 
     const NoteManager = {
@@ -426,9 +423,7 @@
 
             Logger.info(`新建笔记 — ID: ${note.id}, 来源: ${sourceFloor != null ? '楼层#' + sourceFloor : '手动输入'}, 标签: [${tags.join(', ')}]`);
 
-            //刷新面板
             FloatingPanel.refreshNotes();
-
             return note;
         },
 
@@ -490,7 +485,7 @@
     };
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 4: 快照引擎 SnapshotEngine（Step 3 实现，此处骨架） │
+    // │  MODULE 4: 快照引擎 SnapshotEngine                        │
     // └─────────────────────────────────────────────────────────┘
 
     const SnapshotEngine = {
@@ -530,14 +525,12 @@
             }
 
             try {
-                // 从 preset 对象中提取已启用的条目
                 if (_currentPreset.prompts && Array.isArray(_currentPreset.prompts)) {
                     return _currentPreset.prompts
                         .filter(p => p.enabled !== false)
                         .map(p => p.name || p.identifier || '未命名条目');
                 }
 
-                // 兼容其他格式
                 if (_currentPreset.prompt_order && Array.isArray(_currentPreset.prompt_order)) {
                     return _currentPreset.prompt_order
                         .filter(p => p.enabled !== false)
@@ -626,7 +619,7 @@
     };
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 5: 事件桥接EventBridge                │
+    // │  MODULE 5: 事件桥接EventBridge                           │
     // └─────────────────────────────────────────────────────────┘
 
     const EventBridge = {
@@ -651,7 +644,6 @@
                     }
                 };
 
-                // 预设切换
                 listen('PRESET_CHANGED', (data) => {
                     if (data && data.name) {
                         _currentPresetName = data.name;
@@ -659,7 +651,6 @@
                     }
                 });
 
-                // OAI 预设切换（含完整数据）
                 listen('OAI_PRESET_CHANGED_BEFORE', (result) => {
                     if (result) {
                         _currentPresetName = result.presetName || _currentPresetName;
@@ -670,7 +661,6 @@
                     }
                 });
 
-                // 模型切换
                 listen('CHATCOMPLETION_MODEL_CHANGED', (model) => {
                     if (model) {
                         _currentModel = model;
@@ -679,7 +669,6 @@
                     }
                 });
 
-                // API 来源切换
                 listen('CHATCOMPLETION_SOURCE_CHANGED', (source) => {
                     if (source) {
                         _currentSource = source;
@@ -687,18 +676,17 @@
                 }
                 });
 
-                // 消息渲染完成
                 listen('CHARACTER_MESSAGE_RENDERED', (msgId) => {
                     Logger.info(`事件触发: CHARACTER_MESSAGE_RENDERED → 消息 #${msgId}`);
                 });
 
-                // 设置加载完成
                 listen('SETTINGS_LOADED_AFTER', () => {
                     Logger.info('事件触发: SETTINGS_LOADED_AFTER →酒馆设置已加载');
                 });
 
                 const registeredCount = this._handlers.length;
-                Logger.success(`事件监听器已注册 (${registeredCount}个)`);} catch (err) {
+                Logger.success(`事件监听器已注册 (${registeredCount}个)`);
+            } catch (err) {
                 Logger.error('事件桥接初始化失败', err);
             }
         },
@@ -754,16 +742,15 @@
                 <span class="promptlens-fab-badge"></span>
             `;
 
-            //恢复位置
             const pos = Storage.getSettings().fabPos || FAB_DEFAULT_POS;
             fabEl.style.right = pos.right + 'px';
             fabEl.style.bottom = pos.bottom + 'px';
 
-            // 事件绑定
             fabEl.addEventListener('mousedown', (e) => this._onDragStart(e));
             fabEl.addEventListener('touchstart', (e) => this._onDragStart(e), { passive: false });
 
-            document.body.appendChild(fabEl);Logger.success(`悬浮球已创建，位置: right=${pos.right}, bottom=${pos.bottom}`);
+            document.body.appendChild(fabEl);
+            Logger.success(`悬浮球已创建，位置: right=${pos.right}, bottom=${pos.bottom}`);
         },
 
         destroy() {
@@ -808,13 +795,11 @@
                     let newRight = this._startRight - dx;
                     let newBottom = this._startBottom + dy;
 
-                    // 边界限制
                     newRight = Math.max(0, Math.min(window.innerWidth - 48, newRight));
                     newBottom = Math.max(0, Math.min(window.innerHeight - 48, newBottom));
 
                     fabEl.style.right = newRight + 'px';
-                    fabEl.style.bottom = newBottom + 'px';//拖拽时移除left/top 防止冲突
-                    fabEl.style.left = 'auto';
+                    fabEl.style.bottom = newBottom + 'px';fabEl.style.left = 'auto';
                     fabEl.style.top = 'auto';
                 }
             };
@@ -827,14 +812,12 @@
                 document.removeEventListener('touchend', onEnd);
 
                 if (this._moved) {
-                    // 保存位置
                     const newPos = {
                         right: parseInt(fabEl.style.right),
                         bottom: parseInt(fabEl.style.bottom),
                     };
                     Storage.updateSettings({ fabPos: newPos });
                 } else {
-                    // 点击 → 切换面板
                     FloatingPanel.toggle();
                 }
             };
@@ -865,7 +848,6 @@
             panelEl.id = 'promptlens-panel';
 
             panelEl.innerHTML = `
-                <!-- 标题栏 -->
                 <div class="promptlens-panel-titlebar" id="promptlens-panel-titlebar">
                     <div class="promptlens-panel-title">
                         <span class="promptlens-panel-title-dot"></span>
@@ -873,15 +855,13 @@
                     </div>
                     <div class="promptlens-panel-tabs">
                         <button class="promptlens-panel-tab active" data-tab="notes">笔记</button>
-                        <button class="promptlens-panel-tab" data-tab="snapshots">快照</button>
-                    </div>
+                        <button class="promptlens-panel-tab" data-tab="snapshots">快照</button></div>
                     <div class="promptlens-panel-controls">
                         <button class="promptlens-panel-ctrl-btn minimize" title="最小化">─</button>
                         <button class="promptlens-panel-ctrl-btn close" title="关闭">✕</button>
                     </div>
                 </div>
 
-                <!-- 工具栏 -->
                 <div class="promptlens-panel-toolbar">
                     <div class="promptlens-search-wrap">
                         <span class="promptlens-search-icon">🔍</span>
@@ -890,12 +870,8 @@
                     <button class="promptlens-toolbar-btn" id="promptlens-add-note">+ 新建</button>
                 </div>
 
-                <!-- 标签筛选条 -->
-                <div class="promptlens-panel-tags" id="promptlens-tag-bar">
-                    <!-- 动态渲染 -->
-                </div>
+                <div class="promptlens-panel-tags" id="promptlens-tag-bar"></div>
 
-                <!-- 内容区 -->
                 <div class="promptlens-panel-content" id="promptlens-content">
                     <div class="promptlens-empty-state">
                         <div class="promptlens-empty-state-icon">📓</div>
@@ -905,7 +881,6 @@
                     </div>
                 </div>
 
-                <!-- 底部状态栏 -->
                 <div class="promptlens-panel-statusbar">
                     <div class="promptlens-panel-statusbar-left">
                         <span class="promptlens-panel-statusbar-dot"></span>
@@ -915,26 +890,19 @@
                 </div>
             `;
 
-            // 恢复位置
             const savedPos = Storage.getSettings().panelPos;
             if (savedPos) {
                 panelEl.style.left = savedPos.left + 'px';
                 panelEl.style.top = savedPos.top + 'px';
             } else {
-                // 默认位置：屏幕右侧偏中
                 panelEl.style.left = (window.innerWidth - 440) + 'px';
                 panelEl.style.top = '100px';
             }
 
             document.body.appendChild(panelEl);
 
-            // 绑定事件
             this._bindEvents();
-
-            // 渲染标签栏
             this._renderTagBar();
-
-            // 更新状态栏计数
             this._updateStatusBar();
 
             Logger.success('浮动面板已创建');
@@ -943,29 +911,24 @@
         _bindEvents() {
             if (!panelEl) return;
 
-            // 标题栏拖拽
             const titlebar = panelEl.querySelector('#promptlens-panel-titlebar');
             titlebar.addEventListener('mousedown', (e) => this._onDragStart(e));
             titlebar.addEventListener('touchstart', (e) => this._onDragStart(e), { passive: false });
 
-            // 标签切换
             panelEl.querySelectorAll('.promptlens-panel-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     this.switchTab(tab.dataset.tab);
                 });
             });
 
-            // 最小化
             panelEl.querySelector('.minimize').addEventListener('click', () => {
                 this.hide();
             });
 
-            // 关闭
             panelEl.querySelector('.close').addEventListener('click', () => {
                 this.hide();
             });
 
-            //搜索
             const searchInput = panelEl.querySelector('.promptlens-search-input');
             let searchTimer = null;
             searchInput.addEventListener('input', () => {
@@ -976,7 +939,6 @@
                 }, 200);
             });
 
-            // 新建笔记
             panelEl.querySelector('#promptlens-add-note').addEventListener('click', () => {
                 this.showNewNoteForm();
             });
@@ -1021,17 +983,14 @@
                 tab.classList.toggle('active', tab.dataset.tab === tabName);
             });
 
-            // 更新搜索框placeholder
             const searchInput = panelEl.querySelector('.promptlens-search-input');
             searchInput.placeholder = tabName === 'notes' ? '搜索笔记...' : '搜索快照...';
 
-            // 更新新建按钮
             const addBtn = panelEl.querySelector('#promptlens-add-note');
             if (tabName === 'notes') {
-                addBtn.textContent = '+ 新建';addBtn.style.display = '';
+                addBtn.textContent = '+ 新建';
             } else {
                 addBtn.textContent = '📸 快照';
-                addBtn.style.display = '';
             }
 
             this._renderContent();
@@ -1082,7 +1041,6 @@
 
             container.innerHTML = notes.map(note => this._renderNoteCard(note)).join('');
 
-            // 绑定卡片事件
             container.querySelectorAll('.promptlens-note-card').forEach(card => {
                 const noteId = card.dataset.id;
 
@@ -1110,7 +1068,8 @@
         _renderNoteCard(note) {
             const time = new Date(note.createdAt).toLocaleString('zh-CN', {
                 month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit',});
+                hour: '2-digit', minute: '2-digit',
+            });
             const tags = (note.tags || []).map(t =>
                 `<span class="promptlens-card-tag">${this._escapeHtml(t)}</span>`
             ).join('');
@@ -1158,7 +1117,6 @@
 
             container.innerHTML = snapshots.map(snap => this._renderSnapshotCard(snap)).join('');
 
-            // 绑定快照卡片事件
             container.querySelectorAll('.promptlens-snapshot-card').forEach(card => {
                 const snapId = card.dataset.id;
 
@@ -1169,7 +1127,6 @@
                     }
                 });
 
-                // 星级评分点击
                 card.querySelectorAll('.promptlens-star').forEach(star => {
                     star.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -1208,7 +1165,7 @@
                     </div>
                     <div class="promptlens-snap-rating">
                         <span class="promptlens-stars">${stars}</span>
-                        ${snap.note ? `<span class="promptlens-snap-note">"${this._escapeHtml(snap.note)}"</span>` : ''}
+                ${snap.note ? `<span class="promptlens-snap-note">"${this._escapeHtml(snap.note)}"</span>` : ''}
                     </div>
                     <div class="promptlens-card-meta">
                         <span class="promptlens-card-source">${time}</span>
@@ -1235,7 +1192,6 @@
 
             tagBar.innerHTML = html;
 
-            // 绑定标签点击
             tagBar.querySelectorAll('.promptlens-tag-chip:not(.add-tag)').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const tag = chip.dataset.tag;
@@ -1245,7 +1201,6 @@
                 });
             });
 
-            // 添加标签
             tagBar.querySelector('#promptlens-add-tag')?.addEventListener('click', () => {
                 const name = prompt('输入新标签名称:');
                 if (name && name.trim()) {
@@ -1256,14 +1211,13 @@
                         Storage.save();
                         Logger.info(`新增标签: ${trimmed}`);
                         this._renderTagBar();
-                    }
+                }
                 }
             });
         },
 
         showNewNoteForm() {
             if (currentTab === 'snapshots') {
-                // 快照模式下点击 = 手动捕获快照
                 const note = prompt('为这个快照添加备注（可留空）:');
                 if (note !== null) {
                     SnapshotEngine.capture(note);
@@ -1271,7 +1225,6 @@
                 return;
             }
 
-            // 笔记模式下 →弹出输入
             const content = prompt('输入笔记内容:');
             if (content && content.trim()) {
                 NoteManager.add({ content: content.trim() });
@@ -1289,7 +1242,6 @@
         },
 
         _onDragStart(e) {
-            // 不拖拽按钮和输入框
             if (e.target.closest('button') || e.target.closest('input')) return;
 
             e.preventDefault();
@@ -1315,13 +1267,11 @@
                     let newLeft = this._startLeft + dx;
                     let newTop = this._startTop + dy;
 
-                    // 边界限制
                     newLeft = Math.max(0, Math.min(window.innerWidth - 100, newLeft));
                     newTop = Math.max(0, Math.min(window.innerHeight - 50, newTop));
 
                     panelEl.style.left = newLeft + 'px';
-                    panelEl.style.top = newTop + 'px';
-                    panelEl.style.right = 'auto';
+                    panelEl.style.top = newTop + 'px';panelEl.style.right = 'auto';
                     panelEl.style.bottom = 'auto';
                 }
             };
@@ -1358,7 +1308,7 @@
     };
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE8: UI — 选中收藏气泡 SaveBubble（Step 2完善）     │
+    // │  MODULE8: UI — 选中收藏气泡 SaveBubble                │
     // └─────────────────────────────────────────────────────────┘
 
     const SaveBubble = {
@@ -1367,7 +1317,6 @@
 
         init() {
             document.addEventListener('mouseup', (e) => {
-                // 不在面板内部触发
                 if (panelEl && panelEl.contains(e.target)) return;
                 if (fabEl && fabEl.contains(e.target)) return;
                 if (this._bubbleEl && this._bubbleEl.contains(e.target)) return;
@@ -1377,7 +1326,6 @@
                     const text = selection ? selection.toString().trim() : '';
 
                     if (text && text.length > 1) {
-                        //尝试获取楼层信息
                         const floorInfo = this._getFloorInfo(selection);
                         this.show(text, e.clientX, e.clientY, floorInfo);
                     } else {
@@ -1396,7 +1344,6 @@
                 let node = selection.anchorNode;
                 if (node.nodeType === Node.TEXT_NODE) node = node.parentElement;
 
-                // 向上查找消息容器
                 const msgEl = node.closest('.mes[mesid]');
                 if (msgEl) {
                     const mesId = msgEl.getAttribute('mesid');
@@ -1404,8 +1351,7 @@
                         floor: parseInt(mesId),
                         messageId: mesId,
                     };
-                }
-                return null;
+                }return null;
             } catch (e) {
                 return null;
             }
@@ -1433,10 +1379,11 @@
                 font-weight: 500;
                 cursor: pointer;
                 box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-                animation: promptlens-bubble-in 0.15s ease;user-select: none;
+                animation: promptlens-bubble-in 0.15s ease;
+                user-select: none;
                 white-space: nowrap;
             `;
-            this._bubbleEl.innerHTML = '📓 收藏到掠影';
+            this._bubbleEl.innerHTML = '📓收藏到掠影';
 
             this._bubbleEl.addEventListener('click', () => {
                 NoteManager.add({
@@ -1455,7 +1402,6 @@
 
             document.body.appendChild(this._bubbleEl);
 
-            // 自动消失
             clearTimeout(this._hideTimer);
             this._hideTimer = setTimeout(() => this.hide(), 3000);
         },
@@ -1486,56 +1432,159 @@
     }
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 9: 主入口 init()│
+    // │  MODULE 9: 配置面板注入+ 主入口                          │
     // └─────────────────────────────────────────────────────────┘
 
-    function init() {
-        const startTime = performance.now();
-        Logger.info(`${PLUGIN_NAME} v${VERSION} 初始化开始...`);
+    //★★★ 核心修复：手动 fetch settings.html 并注入到 Extensions 面板 ★★★
+    async function loadSettingsPanel() {
+        try {
+            //★ 加载 settings.html
+            const response = await fetch(`/${EXTENSION_PATH}/settings.html`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const html = await response.text();
 
-        // 加载数据
-        Storage.load();
+            // ★ 加载 settings.css
+            const cssLink = document.createElement('link');
+            cssLink.rel = 'stylesheet';
+            cssLink.href = `/${EXTENSION_PATH}/settings.css`;
+            document.head.appendChild(cssLink);
 
-        // 读取启用状态
-        const settings = Storage.getSettings();
-        pluginEnabled = settings.enabled !== false;
+            // ★ 找到 ST的 Extensions 设置容器并注入
+            // ST 1.15的容器选择器，按优先级尝试多个
+            const containerSelectors = [
+                '#extensions_settings',          // 标准容器
+                '#extensions_settings2',         // 备选
+                '.extensions_block',// 另一种布局
+            ];
 
-        if (!pluginEnabled) {
-            Logger.info('插件已禁用，跳过初始化');
+            let container = null;
+            for (const selector of containerSelectors) {
+                container = document.querySelector(selector);
+                if (container) break;
+            }
+
+            if (!container) {
+                // ★ 如果找不到标准容器，等待 ST 加载完成后重试
+                Logger.warn('Extensions 面板容器未找到，将在 2 秒后重试...');
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                for (const selector of containerSelectors) {
+                    container = document.querySelector(selector);
+                    if (container) break;
+                }
+            }
+
+            if (!container) {
+                Logger.error('Extensions 面板容器始终未找到，配置面板无法注入');
+                return false;
+            }
+
+            // ★ 创建插件专属容器并注入
+            const wrapper = document.createElement('div');
+            wrapper.id = 'promptlens-extension-block';
+            wrapper.classList.add('extension_container');  // ST 标准 class
+            wrapper.innerHTML = html;
+            container.appendChild(wrapper);
+
+            Logger.success('配置面板已注入到 Extensions 设置区域');
+            return true;
+
+        } catch (err) {
+            Logger.error('配置面板加载失败', err);
+
+            // ★ 降级方案：直接用 JS 创建一个最小化的设置面板
+            Logger.info('尝试使用内联降级方案创建配置面板...');
+            createFallbackSettingsPanel();
+            return false;
+        }
+    }
+
+    // ★ 降级方案：如果 fetch 失败，用纯 JS 创建面板
+    function createFallbackSettingsPanel() {
+        const containerSelectors = [
+            '#extensions_settings',
+            '#extensions_settings2',
+            '.extensions_block',
+        ];
+
+        let container = null;
+        for (const selector of containerSelectors) {
+            container = document.querySelector(selector);
+            if (container) break;
+        }
+
+        if (!container) {
+            Logger.error('降级方案也无法找到容器，配置面板不可用');
             return;
         }
 
-        // 注册事件
-        EventBridge.init();
+        const wrapper = document.createElement('div');
+        wrapper.id = 'promptlens-extension-block';
+        wrapper.classList.add('extension_container');
+        wrapper.innerHTML = `
+            <div id="promptlens-settings-wrap" class="promptlens-settings" style="padding:12px 4px;color:#ccc;">
+                <div style="margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;">
+                        <span style="font-size:18px;">📓</span>
+                        <span style="color:#e74c3c;">PromptLens ·掠影</span>
+                        <span style="font-size:11px;color:#888;background:rgba(255,255,255,0.06);padding:1px 7px;border-radius:8px;">v${VERSION}</span>
+                    </div>
+                    <div style="font-size:12px;color:#777;margin-top:3px;font-style:italic;">by Shadow — 预设工程师的读书笔记插件</div>
+                </div>
 
-        // 创建悬浮球
-        FloatingBall.create();
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+                    <label style="font-size:13px;font-weight:500;">启用插件</label>
+                    <label style="position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;">
+                        <input type="checkbox" id="promptlens-toggle" checked style="opacity:0;width:0;height:0;" />
+                        <span style="position:absolute;inset:0;background:#333;border-radius:22px;transition:background 0.25s;"></span>
+                    </label>
+                </div>
 
-        // 创建面板（隐藏状态）
-        FloatingPanel.create();
+                <div style="padding:8px 0;">
+                    <button id="promptlens-open-panel" style="width:100%;padding:9px 0;border:none;border-radius:8px;background:#c0392b;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+                        🔴 打开掠影面板
+                    </button>
+                </div>
 
-        // 启用选中收藏
-        SaveBubble.init();
+                <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px 0;"></div>
 
-        // 检查环境变更
-        if (SnapshotEngine.hasChanged()) {
-            FloatingBall.setChanged(true);
-        }
+                <div>
+                    <div style="font-size:12px;font-weight:600;color:#999;margin-bottom:8px;">运行日志</div>
+                    <div id="promptlens-log-container" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;max-height:220px;min-height:80px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.7;"><div class="promptlens-log-empty" style="color:#555;text-align:center;padding:16px 0;font-style:italic;">暂无日志</div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button id="promptlens-log-clear" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">清空日志</button>
+                        <button id="promptlens-log-copy" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">复制日志</button>
+                    </div>
+                </div>
 
-        const elapsed = (performance.now() - startTime).toFixed(0);
-        Logger.success(`插件初始化完成，耗时 ${elapsed}ms`);
-    }
+                <div style="height:1px;background:rgba(255,255,255,0.06);margin:12px 0;"></div>
 
-    function shutdown() {
-        EventBridge.destroy();
-        FloatingBall.destroy();
-        FloatingPanel.destroy();
-        SaveBubble.hide();
-        Logger.info('插件已禁用 —悬浮球已移除, 事件监听已解除');
+                <div>
+                    <div style="font-size:12px;font-weight:600;color:#999;margin-bottom:8px;">数据管理</div>
+                    <div style="font-size:13px;color:#999;margin-bottom:10px;">
+                        <span id="promptlens-stat-notes">笔记: <strong style="color:#e74c3c;">0</strong> 条</span>
+                        <span style="margin:0 8px;color:#444;">·</span>
+                        <span id="promptlens-stat-snapshots">快照: <strong style="color:#e74c3c;">0</strong> 条</span>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <button id="promptlens-export" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">导出数据</button>
+                        <button id="promptlens-import" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">导入数据</button>
+                <button id="promptlens-clear-all" style="padding:5px 12px;border:1px solid rgba(231,76,60,0.25);border-radius:6px;background:rgba(255,255,255,0.04);color:#e74c3c;font-size:12px;cursor:pointer;">⚠ 清空所有数据</button>
+                        <input type="file" id="promptlens-import-file" accept=".json" style="display:none;" />
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(wrapper);
+        Logger.success('配置面板已通过降级方案创建');
     }
 
     function bindSettingsEvents() {
-        // 启用开关
+        //启用开关
         const toggle = document.querySelector('#promptlens-toggle');
         if (toggle) {
             toggle.checked = Storage.getSettings().enabled !== false;
@@ -1561,8 +1610,7 @@
                     Logger.warn('插件未启用，请先打开启用开关');
                     return;
                 }
-                FloatingPanel.show();
-            });
+                FloatingPanel.show();});
         }
 
         // 日志清空
@@ -1595,8 +1643,7 @@
                         FloatingPanel.refreshNotes();
                         FloatingPanel.refreshSnapshots();
                         FloatingPanel._renderTagBar();
-                    }).catch(() => { /* 已在Storage内部记录日志 */ });
-                    importFile.value = '';
+                    }).catch(() => {});importFile.value = '';
                 }
             });
         }
@@ -1605,7 +1652,7 @@
         const clearBtn = document.querySelector('#promptlens-clear-all');
         if (clearBtn) {
             clearBtn.addEventListener('click', () => {
-                if (confirm('⚠ 确定要清空所有PromptLens 数据吗？\n此操作不可撤销！')) {
+                if (confirm('⚠ 确定要清空所有 PromptLens 数据吗？\n此操作不可撤销！')) {
                     if (confirm('再次确认：真的要删除所有笔记和快照吗？')) {
                         Storage.clearAll();
                         FloatingPanel.refreshNotes();
@@ -1618,34 +1665,74 @@
 
         // 更新统计
         updateSettingsStats();
+
+        // ★ 把之前缓冲的日志重新渲染到刚注入的容器里
+        logContainerEl = document.querySelector('#promptlens-log-container');
+        Logger._renderAll();
+    }
+
+    // ★ 主初始化
+    function init() {
+        const startTime = performance.now();
+        Logger.info(`${PLUGIN_NAME} v${VERSION} 初始化开始...`);
+
+        Storage.load();
+
+        const settings = Storage.getSettings();
+        pluginEnabled = settings.enabled !== false;
+
+        if (!pluginEnabled) {
+            Logger.info('插件已禁用，跳过初始化');
+            return;
+        }
+
+        EventBridge.init();
+        FloatingBall.create();
+        FloatingPanel.create();
+        SaveBubble.init();
+
+        if (SnapshotEngine.hasChanged()) {
+            FloatingBall.setChanged(true);
+        }
+
+        const elapsed = (performance.now() - startTime).toFixed(0);
+        Logger.success(`插件初始化完成，耗时 ${elapsed}ms`);
+    }
+
+    function shutdown() {
+        EventBridge.destroy();
+        FloatingBall.destroy();
+        FloatingPanel.destroy();
+        SaveBubble.hide();
+        Logger.info('插件已禁用 —悬浮球已移除, 事件监听已解除');
     }
 
     // ┌─────────────────────────────────────────────────────────┐
     // │  启动                │
     // └─────────────────────────────────────────────────────────┘
 
-    // 等待 DOM 就绪后初始化
+    // ★★★ 修复后的启动流程 ★★★
     if (typeof jQuery !== 'undefined') {
-        jQuery(() => {
-            // 获取日志容器引用
-            logContainerEl = document.querySelector('#promptlens-log-container');
+        jQuery(async () => {
+            //1. 先注入配置面板到 Extensions 区域
+            await loadSettingsPanel();
 
-            // 绑定 settings 面板事件
+            // 2. 绑定配置面板事件（此时 DOM 已存在）
             bindSettingsEvents();
 
-            // 初始化插件
+            // 3. 初始化插件主体
             init();
         });
     } else {
-        // 无jQuery 的降级方案
-        document.addEventListener('DOMContentLoaded', () => {
-            logContainerEl = document.querySelector('#promptlens-log-container');
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSettingsPanel();
             bindSettingsEvents();
             init();
         });
     }
 
 })();
+
 
 
 
