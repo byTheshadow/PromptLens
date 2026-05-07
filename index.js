@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════════════
-//PromptLens · 掠影 v1.0.0
-//  by Shadow — 预设工程师的读书笔记插件
+//═══════════════════════════════════════════════════════════════
+//  PromptLens · 掠影 v1.0.0
+//  by Shadow —预设工程师的读书笔记插件
 //  SillyTavern Extension
 // ═══════════════════════════════════════════════════════════════
 
@@ -8,7 +8,7 @@
     'use strict';
 
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE0: 常量& 配置                                   │
+    // │  MODULE0: 常量 & 配置                                  │
     // └─────────────────────────────────────────────────────────┘
 
     const PLUGIN_NAME = 'PromptLens';
@@ -41,6 +41,8 @@
     let panelEl = null;
     let logContainerEl = null;
 
+    // ═══ MODULE 0 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
     // │  MODULE 1: 日志系统 Logger│
     // └─────────────────────────────────────────────────────────┘
@@ -48,6 +50,7 @@
     const Logger = {
         _logs: [],
 
+        /** 格式化当前时间为HH:MM:SS */
         _formatTime() {
             const d = new Date();
             return [
@@ -57,11 +60,13 @@
             ].join(':');
         },
 
+        /** 获取日志级别对应的图标 */
         _levelIcon(level) {
             const map = { info: 'ℹ️', success: '✅', warn: '⚠️', error: '❌' };
             return map[level] || 'ℹ️';
         },
 
+        /** 内部推送日志条目 */
         _push(level, message, errorObj) {
             const entry = {
                 time: this._formatTime(),
@@ -88,6 +93,7 @@
             console[consoleFn](`[${PLUGIN_NAME}] ${this._levelIcon(level)} ${message}`, errorObj || '');
         },
 
+        /** 渲染单条日志到settings面板的日志容器 */
         _renderEntry(entry) {
             //★ 每次渲染时重新获取容器引用，因为 settings.html 可能后加载
             if (!logContainerEl) {
@@ -117,6 +123,7 @@
             logContainerEl.scrollTop = logContainerEl.scrollHeight;
         },
 
+        /** 重新渲染所有日志（用于面板注入后回放） */
         _renderAll() {
             logContainerEl = document.querySelector('#promptlens-log-container');
             if (!logContainerEl) return;
@@ -128,6 +135,7 @@
             this._logs.forEach(entry => this._renderEntry(entry));
         },
 
+        /** HTML 转义 */
         _escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
@@ -141,6 +149,7 @@
 
         getLogs() { return [...this._logs]; },
 
+        /** 清空所有日志 */
         clear() {
             this._logs = [];
             logContainerEl = document.querySelector('#promptlens-log-container');
@@ -149,6 +158,7 @@
             }
         },
 
+        /** 复制所有日志到剪贴板 */
         copyAll() {
             const text = this._logs.map(e => {
                 let line = `[${e.time}] ${this._levelIcon(e.level)} ${e.message}`;
@@ -164,13 +174,16 @@
         },
     };
 
+    // ═══ MODULE 1 Logger 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 2: 存储层 Storage                                 │
+    // │  MODULE 2: 存储层 Storage                               │
     // └─────────────────────────────────────────────────────────┘
 
     const Storage = {
         _data: null,
 
+        /** 返回默认数据结构 */
         _defaultData() {
             return {
                 notes: [],
@@ -178,12 +191,16 @@
                 tags: [...DEFAULT_TAGS],
                 settings: {
                     enabled: true,
+                    fabVisible: true,
                     fabPos: { ...FAB_DEFAULT_POS },
                     panelPos: null,
-                },_version: VERSION,
+                    settingsCollapsed: false,
+                },
+                _version: VERSION,
             };
         },
 
+        /** 从 localStorage 加载数据 */
         load() {
             try {
                 const raw = localStorage.getItem(STORAGE_KEY);
@@ -224,6 +241,7 @@
             }
         },
 
+        /** 保存数据到 localStorage */
         save() {
             try {
                 const json = JSON.stringify(this._data);
@@ -244,6 +262,7 @@
             }
         },
 
+        /** 获取全部数据 */
         getAll() {
             if (!this._data) this.load();
             return this._data;
@@ -254,11 +273,13 @@
         getTags() { return this.getAll().tags; },
         getSettings() { return this.getAll().settings; },
 
+        /** 更新 settings 子字段 */
         updateSettings(partial) {
             Object.assign(this._data.settings, partial);
             this.save();
         },
 
+        /** 导出为 JSON 文件 */
         exportJSON() {
             try {
                 const json = JSON.stringify(this._data, null, 2);
@@ -280,9 +301,10 @@
             }
         },
 
+        /** 导出笔记为Markdown 文件 */
         exportMarkdown() {
             try {
-                let md = `# 📓 PromptLens · 掠影 —笔记导出\n\n`;
+                let md = `# 📓 PromptLens · 掠影 — 笔记导出\n\n`;
                 md += `> 导出时间: ${new Date().toLocaleString()}\n\n`;
                 md += `---\n\n`;
 
@@ -322,6 +344,7 @@
             }
         },
 
+        /** 导入JSON 文件（合并模式） */
         importJSON(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -386,6 +409,7 @@
             });
         },
 
+        /** 清空所有数据 */
         clearAll() {
             this._data = this._defaultData();
             this.save();
@@ -393,15 +417,19 @@
         },
     };
 
+    // ═══ MODULE 2 Storage 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 3: 笔记管理 NoteManager                           │
+    // │  MODULE 3: 笔记管理 NoteManager                         │
     // └─────────────────────────────────────────────────────────┘
 
     const NoteManager = {
+        /** 生成唯一 ID */
         _generateId() {
             return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
         },
 
+        /** 新建笔记 */
         add({ content, tags = [], sourceFloor = null, sourceMessageId = null }) {
             if (!content || !content.trim()) {
                 Logger.warn('笔记内容为空，已忽略');
@@ -427,6 +455,7 @@
             return note;
         },
 
+        /** 删除笔记 */
         delete(id) {
             const data = Storage.getAll();
             const idx = data.notes.findIndex(n => n.id === id);
@@ -441,6 +470,7 @@
             return true;
         },
 
+        /** 更新笔记字段 */
         update(id, fields) {
             const data = Storage.getAll();
             const note = data.notes.find(n => n.id === id);
@@ -450,14 +480,17 @@
             }
             Object.assign(note, fields, { updatedAt: new Date().toISOString() });
             Storage.save();
+            Logger.info(`更新笔记 — ID: ${id}, 字段: ${Object.keys(fields).join(', ')}`);
             FloatingPanel.refreshNotes();
             return true;
         },
 
+        /** 获取所有笔记 */
         getAll() {
             return Storage.getNotes();
         },
 
+        /** 按关键词和标签筛选笔记 */
         filter({ keyword = '', tag = null } = {}) {
             let notes = this.getAll();
 
@@ -473,6 +506,7 @@
             return notes;
         },
 
+        /** 复制笔记内容到剪贴板 */
         copyToClipboard(id) {
             const note = this.getAll().find(n => n.id === id);
             if (!note) return;
@@ -484,16 +518,23 @@
         },
     };
 
+    // ═══ MODULE 3 NoteManager 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 4: 快照引擎 SnapshotEngine                        │
+    // │  MODULE 4: 快照引擎 SnapshotEngine                      │
     // └─────────────────────────────────────────────────────────┘
 
     const SnapshotEngine = {
+        /** 生成快照 ID */
         _generateId() {
             return 'snap_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
         },
 
+        /** 捕获当前环境快照 */
         capture(manualNote = '') {
+            //★ 捕获前先刷新一次当前状态，确保拿到最新值
+            EventBridge._readCurrentState();
+
             const snapshot = {
                 id: this._generateId(),
                 timestamp: new Date().toISOString(),
@@ -510,7 +551,7 @@
             Storage.save();
 
             const entryCount = snapshot.enabledEntries.length;
-            Logger.info(`快照捕获 — 预设: ${snapshot.presetName}, 模型: ${snapshot.model}, 条目: ${entryCount}个`);
+            Logger.info(`快照捕获 — 预设: ${snapshot.presetName}, 模型: ${snapshot.model}, API: ${snapshot.apiSource}, 条目: ${entryCount}个`);
 
             FloatingPanel.refreshSnapshots();
             FloatingBall.setChanged(false);
@@ -518,25 +559,49 @@
             return snapshot;
         },
 
+        /** 提取当前预设中已启用的条目名称列表 */
         _getEnabledEntries() {
-            if (!_currentPreset) {
-                Logger.warn('快照捕获时preset 对象为 null，已跳过 enabledEntries 记录');
-                return [];
-            }
-
+            // ★ 多路径尝试获取预设条目
             try {
-                if (_currentPreset.prompts && Array.isArray(_currentPreset.prompts)) {
-                    return _currentPreset.prompts
-                        .filter(p => p.enabled !== false)
-                        .map(p => p.name || p.identifier || '未命名条目');
+                // 路径1: 从事件捕获的_currentPreset 对象
+                if (_currentPreset) {
+                    if (_currentPreset.prompts && Array.isArray(_currentPreset.prompts)) {
+                        const entries = _currentPreset.prompts
+                            .filter(p => p.enabled !== false)
+                            .map(p => p.name || p.identifier || '未命名条目');
+                        if (entries.length > 0) {
+                            Logger.info(`条目来源: _currentPreset.prompts (${entries.length}个)`);
+                            return entries;
+                        }
+                    }
+
+                    if (_currentPreset.prompt_order && Array.isArray(_currentPreset.prompt_order)) {
+                        const entries = _currentPreset.prompt_order
+                            .filter(p => p.enabled !== false)
+                            .map(p => p.identifier || '未命名条目');
+                        if (entries.length > 0) {
+                            Logger.info(`条目来源: _currentPreset.prompt_order (${entries.length}个)`);
+                            return entries;
+                        }
+                    }
                 }
 
-                if (_currentPreset.prompt_order && Array.isArray(_currentPreset.prompt_order)) {
-                    return _currentPreset.prompt_order
-                        .filter(p => p.enabled !== false)
-                        .map(p => p.identifier || '未命名条目');
+                // 路径2: 从 ST 全局变量尝试获取
+                const oaiSettings = window.oai_settings;
+                if (oaiSettings) {
+                    //尝试从 openai_settings 中获取当前预设的prompts
+                    const presetName = _currentPresetName || oaiSettings.preset_settings_openai;
+                    if (presetName && oaiSettings.preset_settings_openai) {
+                        //尝试从 DOM 中的 prompt manager 获取
+                        const promptEntries = this._getEntriesFromDOM();
+                        if (promptEntries.length > 0) {
+                            Logger.info(`条目来源: DOM prompt-manager (${promptEntries.length}个)`);
+                            return promptEntries;
+                        }
+                    }
                 }
 
+                Logger.warn('快照捕获时未能获取 enabledEntries');
                 return [];
             } catch (err) {
                 Logger.error('提取 enabledEntries 失败', err);
@@ -544,10 +609,36 @@
             }
         },
 
+        /** 从 DOM 的 prompt manager 列表中提取已启用条目 */
+        _getEntriesFromDOM() {
+            try {
+                const entries = [];
+                // ST 的 prompt manager 列表项
+                const items = document.querySelectorAll('#completion_prompt_manager_list .prompt-manager-entry, #completion_prompt_manager_list .completion_prompt_manager_prompt');
+                items.forEach(item => {
+                    // 检查是否启用（有 checkbox 或 toggle）
+                    const checkbox = item.querySelector('input[type="checkbox"]');
+                    const isEnabled = checkbox ? checkbox.checked : !item.classList.contains('disabled');
+                    if (isEnabled) {
+                        const nameEl = item.querySelector('.prompt-manager-prompt-name, .completion_prompt_manager_prompt_name, [data-prompt-name]');
+                        const name = nameEl ? (nameEl.textContent || nameEl.dataset.promptName || '').trim() : '';
+                        if (name) {
+                            entries.push(name);
+                        }
+                    }
+                });
+                return entries;
+            } catch (err) {
+                return [];
+            }
+        },
+
+        /** 获取所有快照 */
         getAll() {
             return Storage.getSnapshots();
         },
 
+        /** 删除快照 */
         delete(id) {
             const data = Storage.getAll();
             const idx = data.snapshots.findIndex(s => s.id === id);
@@ -559,14 +650,17 @@
             return true;
         },
 
+        /** 更新快照备注 */
         updateNote(id, note) {
             const snap = Storage.getSnapshots().find(s => s.id === id);
             if (!snap) return false;
             snap.note = note;
             Storage.save();
+            Logger.info(`快照备注更新 — ID: ${id}`);
             return true;
         },
 
+        /** 更新快照评分 */
         updateRating(id, stars) {
             const snap = Storage.getSnapshots().find(s => s.id === id);
             if (!snap) return false;
@@ -576,6 +670,7 @@
             return true;
         },
 
+        /** 更新快照评价文字 */
         updateRatingNote(id, ratingNote) {
             const snap = Storage.getSnapshots().find(s => s.id === id);
             if (!snap) return false;
@@ -584,6 +679,7 @@
             return true;
         },
 
+        /** 对比两个快照的差异 */
         diff(idA, idB) {
             const snapA = Storage.getSnapshots().find(s => s.id === idA);
             const snapB = Storage.getSnapshots().find(s => s.id === idB);
@@ -606,6 +702,7 @@
             };
         },
 
+        /** 检测当前环境是否相对上次快照有变化 */
         hasChanged() {
             const snaps = Storage.getSnapshots();
             if (snaps.length === 0) return false;
@@ -618,20 +715,26 @@
         },
     };
 
+    // ═══ MODULE 4 SnapshotEngine 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 5: 事件桥接EventBridge                           │
+    // │  MODULE 5: 事件桥接EventBridge                         │
     // └─────────────────────────────────────────────────────────┘
 
     const EventBridge = {
         _handlers: [],
 
+        /** 初始化事件监听 + 主动读取当前状态 */
         init() {
             try {
+                // ★★★ 核心修复：启动时主动读取当前环境状态 ★★★
+                this._readCurrentState();
+
                 const eventSource = window.eventSource || (typeof SillyTavern !== 'undefined' && SillyTavern.eventSource);
                 const eventTypes = window.event_types || (typeof SillyTavern !== 'undefined' && SillyTavern.event_types);
 
                 if (!eventSource || !eventTypes) {
-                    Logger.warn('未找到 SillyTavern 事件系统，快照功能将不可用');
+                    Logger.warn('未找到 SillyTavern 事件系统，快照功能将仅依赖 DOM 读取');
                     return;
                 }
 
@@ -644,13 +747,16 @@
                     }
                 };
 
+                //监听预设切换
                 listen('PRESET_CHANGED', (data) => {
                     if (data && data.name) {
                         _currentPresetName = data.name;
-                        Logger.info(`事件触发: PRESET_CHANGED → { name: "${data.name}" }`);this._checkChanged();
+                        Logger.info(`事件触发: PRESET_CHANGED → { name: "${data.name}" }`);
+                        this._checkChanged();
                     }
                 });
 
+                // 监听 OAI 预设切换（含预设对象）
                 listen('OAI_PRESET_CHANGED_BEFORE', (result) => {
                     if (result) {
                         _currentPresetName = result.presetName || _currentPresetName;
@@ -661,6 +767,7 @@
                     }
                 });
 
+                // 监听模型切换
                 listen('CHATCOMPLETION_MODEL_CHANGED', (model) => {
                     if (model) {
                         _currentModel = model;
@@ -669,6 +776,7 @@
                     }
                 });
 
+                // 监听 API 源切换
                 listen('CHATCOMPLETION_SOURCE_CHANGED', (source) => {
                     if (source) {
                         _currentSource = source;
@@ -676,12 +784,16 @@
                 }
                 });
 
+                // 监听角色消息渲染
                 listen('CHARACTER_MESSAGE_RENDERED', (msgId) => {
                     Logger.info(`事件触发: CHARACTER_MESSAGE_RENDERED → 消息 #${msgId}`);
                 });
 
+                // 监听设置加载完成
                 listen('SETTINGS_LOADED_AFTER', () => {
                     Logger.info('事件触发: SETTINGS_LOADED_AFTER →酒馆设置已加载');
+                    //★ 设置加载后再次读取，因为此时 ST 全局变量已完全就绪
+                    setTimeout(() => this._readCurrentState(), 500);
                 });
 
                 const registeredCount = this._handlers.length;
@@ -691,6 +803,105 @@
             }
         },
 
+        /**
+         * ★★★ 核心新增：主动从 ST DOM / 全局变量读取当前环境状态 ★★★
+         *解决：插件启动时事件尚未触发，_currentModel 等全为空的问题
+         */
+        _readCurrentState() {
+            try {
+                let readCount = 0;
+
+                // ── 读取 API 源 ──
+                // 优先从 ST 全局变量读取
+                if (window.main_api) {
+                    _currentSource = window.main_api;
+                    readCount++;
+                } else {
+                    // 降级：从 DOM 读取
+                    const apiSelect = document.querySelector('#main_api');
+                    if (apiSelect && apiSelect.value) {
+                        _currentSource = apiSelect.value;
+                        readCount++;
+                    }
+                }
+
+                // ── 读取 Chat Completion 源（openai / claude / custom等） ──
+                const chatSourceSelect = document.querySelector('#chat_completion_source');
+                if (chatSourceSelect && chatSourceSelect.value) {
+                    const chatSource = chatSourceSelect.value;
+                    // 如果 main_api 是 openai，则用 chat_completion_source 作为更精确的来源
+                    if (_currentSource === 'openai' || !_currentSource) {
+                        _currentSource = chatSource;}
+                }
+
+                // ── 读取模型 ──
+                //尝试从 ST 全局变量读取
+                if (window.oai_settings && window.oai_settings.openai_model) {
+                    _currentModel = window.oai_settings.openai_model;
+                    readCount++;
+                }
+                // 降级：从多个可能的 DOM 下拉框读取
+                if (!_currentModel) {
+                    const modelSelectors = [
+                        '#model_openai_select',
+                        '#model_claude_select',
+                        '#model_google_select',
+                        '#model_mistral_select',
+                        '#model_custom_select',
+                        '#openrouter_model',
+                    ];
+                    for (const sel of modelSelectors) {
+                        const el = document.querySelector(sel);
+                        if (el && el.value) {
+                            _currentModel = el.value;
+                            readCount++;
+                            break;
+                        }
+                    }
+                }
+
+                // ── 读取预设名──
+                // 从 ST 全局变量读取
+                if (window.oai_settings && window.oai_settings.preset_settings_openai) {
+                    _currentPresetName = window.oai_settings.preset_settings_openai;
+                    readCount++;
+                }
+                // 降级：从 DOM 下拉框读取
+                if (!_currentPresetName) {
+                    const presetSelectors = [
+                        '#settings_preset_openai',
+                        '#settings_preset',];
+                    for (const sel of presetSelectors) {
+                        const el = document.querySelector(sel);
+                        if (el) {
+                            // 获取选中项的文本（而非 value，因为 value 可能是索引）
+                            const selectedOption = el.options ? el.options[el.selectedIndex] : null;
+                            const presetName = selectedOption ? selectedOption.textContent.trim() : el.value;
+                            if (presetName) {
+                                _currentPresetName = presetName;
+                                readCount++;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // ── 尝试获取预设对象 ──
+                if (!_currentPreset && window.oai_settings) {
+                    // ST 可能把当前预设存在不同的地方
+                    if (window.oai_settings.prompts && Array.isArray(window.oai_settings.prompts)) {
+                        _currentPreset = { prompts: window.oai_settings.prompts };
+                    } else if (window.oai_settings.prompt_order) {
+                        _currentPreset = { prompt_order: window.oai_settings.prompt_order };
+                    }
+                }
+
+                Logger.info(`环境状态读取完成 — 模型: "${_currentModel || '未获取'}", API: "${_currentSource || '未获取'}", 预设: "${_currentPresetName || '未获取'}" (${readCount}项成功)`);} catch (err) {
+                Logger.error('读取当前环境状态失败', err);
+            }
+        },
+
+        /** 检查环境是否变更，驱动悬浮球角标 */
         _checkChanged() {
             const changed = SnapshotEngine.hasChanged();
             FloatingBall.setChanged(changed);
@@ -708,6 +919,7 @@
             }
         },
 
+        /** 销毁所有事件监听 */
         destroy() {
             this._handlers.forEach(({ event, handler, source }) => {
                 try {
@@ -719,8 +931,10 @@
         },
     };
 
+    // ═══ MODULE 5 EventBridge 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 6: UI —悬浮球 FloatingBall                       │
+    // │  MODULE 6: UI —悬浮球 FloatingBall                     │
     // └─────────────────────────────────────────────────────────┘
 
     const FloatingBall = {
@@ -731,6 +945,7 @@
         _startBottom: 0,
         _moved: false,
 
+        /** 创建悬浮球 DOM */
         create() {
             if (fabEl) return;
 
@@ -749,10 +964,10 @@
             fabEl.addEventListener('mousedown', (e) => this._onDragStart(e));
             fabEl.addEventListener('touchstart', (e) => this._onDragStart(e), { passive: false });
 
-            document.body.appendChild(fabEl);
-            Logger.success(`悬浮球已创建，位置: right=${pos.right}, bottom=${pos.bottom}`);
+            document.body.appendChild(fabEl);Logger.success(`悬浮球已创建，位置: right=${pos.right}, bottom=${pos.bottom}`);
         },
 
+        /** 销毁悬浮球 */
         destroy() {
             if (fabEl) {
                 fabEl.remove();
@@ -761,6 +976,7 @@
             }
         },
 
+        /** 设置环境变更角标 */
         setChanged(bool) {
             if (!fabEl) return;
             const badge = fabEl.querySelector('.promptlens-fab-badge');
@@ -769,6 +985,7 @@
             }
         },
 
+        /** 拖拽开始 */
         _onDragStart(e) {
             e.preventDefault();
             this._isDragging = true;
@@ -829,8 +1046,10 @@
         },
     };
 
+    // ═══ MODULE 6 FloatingBall 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 7: UI — 浮动面板 FloatingPanel                    │
+    // │  MODULE 7: UI — 浮动面板 FloatingPanel                  │
     // └─────────────────────────────────────────────────────────┘
 
     const FloatingPanel = {
@@ -841,6 +1060,7 @@
         _startTop: 0,
         _moved: false,
 
+        /** 创建浮动面板 DOM */
         create() {
             if (panelEl) return;
 
@@ -890,7 +1110,7 @@
                 </div>
             `;
 
-             this._applyPosition();
+            this._applyPosition();
 
             document.body.appendChild(panelEl);
 
@@ -900,28 +1120,26 @@
 
             Logger.success('浮动面板已创建');
         },
-                // ★ 判断是否为移动端
+
+        /** 判断是否为移动端 */
         _isMobile() {
             return window.innerWidth <= 768;
         },
 
-        // ★ 智能定位：移动端居中，桌面端恢复记忆位置
+        /** 智能定位：移动端居中，桌面端恢复记忆位置 */
         _applyPosition() {
             if (!panelEl) return;
 
             if (this._isMobile()) {
-                // 移动端：固定位置，由CSS media query 控制尺寸
                 panelEl.style.left = '8px';
                 panelEl.style.top = '50px';
-                panelEl.style.right = 'auto';
+                panelEl.style.right ='auto';
                 panelEl.style.bottom = 'auto';
                 return;
             }
 
-            // 桌面端：恢复记忆位置，或使用默认位置
             const savedPos = Storage.getSettings().panelPos;
             if (savedPos) {
-                //★ 确保记忆位置在可视范围内
                 const safeLeft = Math.max(0, Math.min(savedPos.left, window.innerWidth - 200));
                 const safeTop = Math.max(0, Math.min(savedPos.top, window.innerHeight - 100));
                 panelEl.style.left = safeLeft + 'px';
@@ -933,9 +1151,8 @@
             panelEl.style.right = 'auto';
             panelEl.style.bottom = 'auto';
         },
-        // ═══ _applyPosition 结束 ═══
 
-
+        /** 绑定面板内部事件 */
         _bindEvents() {
             if (!panelEl) return;
 
@@ -972,25 +1189,24 @@
             });
         },
 
-           show() {
+        /** 显示面板 */
+        show() {
             if (!panelEl) return;
-
-            // ★ 每次打开时重新检查位置，确保在可视区域内
             this._applyPosition();
-
             panelEl.classList.add('visible');
             panelVisible = true;
             this._renderContent();
             this._updateStatusBar();
         },
 
-
+        /** 隐藏面板 */
         hide() {
             if (!panelEl) return;
             panelEl.classList.remove('visible');
             panelVisible = false;
         },
 
+        /** 切换面板显隐 */
         toggle() {
             if (panelVisible) {
                 this.hide();
@@ -999,6 +1215,7 @@
             }
         },
 
+        /** 销毁面板 */
         destroy() {
             if (panelEl) {
                 panelEl.remove();
@@ -1008,6 +1225,7 @@
             }
         },
 
+        /** 切换标签页 */
         switchTab(tabName) {
             currentTab = tabName;
             if (!panelEl) return;
@@ -1026,19 +1244,28 @@
                 addBtn.textContent = '📸 快照';
             }
 
+            //★ 切换标签时，笔记标签栏只在笔记页显示
+            const tagBar = panelEl.querySelector('#promptlens-tag-bar');
+            if (tagBar) {
+                tagBar.style.display = tabName === 'notes' ? '' : 'none';
+            }
+
             this._renderContent();
         },
 
+        /** 刷新笔记列表 */
         refreshNotes() {
             if (currentTab === 'notes') this._renderContent();
             this._updateStatusBar();
         },
 
+        /** 刷新快照列表 */
         refreshSnapshots() {
             if (currentTab === 'snapshots') this._renderContent();
             this._updateStatusBar();
         },
 
+        /** 渲染当前标签页内容 */
         _renderContent() {
             if (!panelEl) return;
             const container = panelEl.querySelector('#promptlens-content');
@@ -1051,6 +1278,7 @@
             }
         },
 
+        /** 渲染笔记列表 */
         _renderNotesList(container) {
             const notes = NoteManager.filter({
                 keyword: currentSearchKeyword,
@@ -1069,14 +1297,25 @@
                             </span>
                         </div>
                     </div>
-                `;return;
+                `;
+                return;
             }
 
             container.innerHTML = notes.map(note => this._renderNoteCard(note)).join('');
 
+            // 绑定笔记卡片事件
             container.querySelectorAll('.promptlens-note-card').forEach(card => {
                 const noteId = card.dataset.id;
 
+                //★ 点击卡片内容区展开/折叠
+                const contentEl = card.querySelector('.promptlens-card-content');
+                if (contentEl) {
+                    contentEl.addEventListener('click', () => {
+                        contentEl.classList.toggle('expanded');});
+                    contentEl.style.cursor = 'pointer';
+                }
+
+                // 复制按钮
                 card.querySelector('.promptlens-card-copy')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     NoteManager.copyToClipboard(noteId);
@@ -1089,6 +1328,13 @@
                     }, 1200);
                 });
 
+                // ★ 编辑按钮
+                card.querySelector('.promptlens-card-edit')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._showNoteEditForm(noteId, card);
+                });
+
+                // 删除按钮
                 card.querySelector('.promptlens-card-delete')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (confirm('确定删除这条笔记？')) {
@@ -1098,6 +1344,7 @@
             });
         },
 
+        /** 渲染单个笔记卡片 HTML */
         _renderNoteCard(note) {
             const time = new Date(note.createdAt).toLocaleString('zh-CN', {
                 month: '2-digit', day: '2-digit',
@@ -1117,12 +1364,72 @@
                     ${tags ? `<div class="promptlens-card-tags">${tags}</div>` : ''}
                 <div class="promptlens-card-actions">
                         <button class="promptlens-card-copy" title="复制内容">📋</button>
+                        <button class="promptlens-card-edit" title="编辑">✏️</button>
                         <button class="promptlens-card-delete" title="删除">🗑️</button>
                     </div>
                 </div>
             `;
         },
 
+        /** ★ 在卡片内显示笔记编辑表单 */
+        _showNoteEditForm(noteId, cardEl) {
+            const note = NoteManager.getAll().find(n => n.id === noteId);
+            if (!note) return;
+
+            // 替换卡片内容为编辑表单
+            const allTags = Storage.getTags();
+            const noteTags = note.tags || [];
+
+            const tagCheckboxes = allTags.map(tag => {
+                const checked = noteTags.includes(tag) ? 'checked' : '';
+                return `<label class="promptlens-edit-tag-label">
+                    <input type="checkbox" value="${this._escapeHtml(tag)}" ${checked} />
+                    <span>${this._escapeHtml(tag)}</span>
+                </label>`;
+            }).join('');
+
+            cardEl.innerHTML = `
+                <div class="promptlens-edit-form">
+                    <textarea class="promptlens-edit-textarea" rows="4">${this._escapeHtml(note.content)}</textarea><div class="promptlens-edit-tags-section">
+                        <div class="promptlens-edit-tags-title">标签</div>
+                        <div class="promptlens-edit-tags-list">${tagCheckboxes}</div>
+                    </div><div class="promptlens-edit-actions">
+                        <button class="promptlens-edit-save">保存</button>
+                        <button class="promptlens-edit-cancel">取消</button>
+                    </div>
+                </div>
+            `;
+
+            cardEl.classList.add('editing');
+
+            // 保存
+            cardEl.querySelector('.promptlens-edit-save').addEventListener('click', () => {
+                const newContent = cardEl.querySelector('.promptlens-edit-textarea').value.trim();
+                if (!newContent) {
+                    Logger.warn('笔记内容不能为空');
+                    return;
+                }
+                const selectedTags = [];
+                cardEl.querySelectorAll('.promptlens-edit-tags-list input[type="checkbox"]:checked').forEach(cb => {
+                    selectedTags.push(cb.value);
+                });
+                NoteManager.update(noteId, { content: newContent, tags: selectedTags });
+            });
+
+            // 取消
+            cardEl.querySelector('.promptlens-edit-cancel').addEventListener('click', () => {
+                this._renderContent();
+            });
+
+            // 自动聚焦
+            const textarea = cardEl.querySelector('.promptlens-edit-textarea');
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+            }
+        },
+
+        /** 渲染快照列表 */
         _renderSnapshotsList(container) {
             let snapshots = SnapshotEngine.getAll();
 
@@ -1148,11 +1455,26 @@
                 return;
             }
 
-            container.innerHTML = snapshots.map(snap => this._renderSnapshotCard(snap)).join('');
+            //★ 显示当前环境信息摘要
+            let envSummary = '';
+            if (_currentModel || _currentPresetName || _currentSource) {
+                envSummary = `
+                    <div class="promptlens-env-summary">
+                        <span class="promptlens-env-label">当前环境</span>
+                        ${_currentModel ? `<span class="promptlens-env-item">🤖 ${this._escapeHtml(_currentModel)}</span>` : ''}
+                        ${_currentPresetName ? `<span class="promptlens-env-item">📋 ${this._escapeHtml(_currentPresetName)}</span>` : ''}
+                        ${_currentSource ? `<span class="promptlens-env-item">🔌 ${this._escapeHtml(_currentSource)}</span>` : ''}
+                    </div>
+                `;
+            }
 
+            container.innerHTML = envSummary + snapshots.map(snap => this._renderSnapshotCard(snap)).join('');
+
+            // 绑定快照卡片事件
             container.querySelectorAll('.promptlens-snapshot-card').forEach(card => {
                 const snapId = card.dataset.id;
 
+                // 删除
                 card.querySelector('.promptlens-card-delete')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (confirm('确定删除这个快照？')) {
@@ -1160,6 +1482,7 @@
                     }
                 });
 
+                // 星级评分
                 card.querySelectorAll('.promptlens-star').forEach(star => {
                     star.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -1167,9 +1490,25 @@
                         SnapshotEngine.updateRating(snapId, rating);this._renderContent();
                     });
                 });
+
+                // ★ 快照备注编辑
+                card.querySelector('.promptlens-snap-note-edit')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this._showSnapNoteEditForm(snapId, card);
+                });
+
+                // ★ 点击条目区展开/折叠
+                const entriesEl = card.querySelector('.promptlens-snap-entries');
+                if (entriesEl) {
+                    entriesEl.addEventListener('click', () => {
+                        entriesEl.classList.toggle('expanded');
+                    });
+                    entriesEl.style.cursor = 'pointer';
+                }
             });
         },
 
+        /** 渲染单个快照卡片 HTML */
         _renderSnapshotCard(snap) {
             const time = new Date(snap.timestamp).toLocaleString('zh-CN', {
                 month: '2-digit', day: '2-digit',
@@ -1179,11 +1518,18 @@
             const entries = snap.enabledEntries || [];
             const entryDisplay = entries.length > 3
                 ? entries.slice(0, 3).join(', ') + ` +${entries.length - 3}`
-                : entries.join(',') || '无记录';
+                : entries.join(', ') || '无记录';
+
+            //★ 完整条目列表（展开时显示）
+            const fullEntryDisplay = entries.join(', ') || '无记录';
 
             const stars = [1, 2, 3, 4, 5].map(i =>
                 `<span class="promptlens-star ${i <= (snap.rating || 0) ? 'filled' : ''}" data-rating="${i}">★</span>`
             ).join('');
+
+            const noteDisplay = snap.note
+                ? `<span class="promptlens-snap-note">"${this._escapeHtml(snap.note)}"</span>`
+                : `<span class="promptlens-snap-note promptlens-snap-note-placeholder">点击添加备注</span>`;
 
             return `
                 <div class="promptlens-snapshot-card" data-id="${snap.id}">
@@ -1193,12 +1539,14 @@
                     <div class="promptlens-snap-info">
                         模型: ${this._escapeHtml(snap.model)} · API: ${this._escapeHtml(snap.apiSource)}
                     </div>
-                    <div class="promptlens-snap-entries">
+                    <div class="promptlens-snap-entries" title="点击展开全部条目"
+                         data-short="${this._escapeHtml(entryDisplay)}"
+                         data-full="${this._escapeHtml(fullEntryDisplay)}">
                         条目: ${this._escapeHtml(entryDisplay)}
                     </div>
                     <div class="promptlens-snap-rating">
                         <span class="promptlens-stars">${stars}</span>
-                ${snap.note ? `<span class="promptlens-snap-note">"${this._escapeHtml(snap.note)}"</span>` : ''}
+                        <span class="promptlens-snap-note-edit">${noteDisplay}</span>
                     </div>
                     <div class="promptlens-card-meta">
                         <span class="promptlens-card-source">${time}</span>
@@ -1210,6 +1558,45 @@
             `;
         },
 
+        /** ★ 在快照卡片内显示备注编辑 */
+        _showSnapNoteEditForm(snapId, cardEl) {
+            const snap = SnapshotEngine.getAll().find(s => s.id === snapId);
+            if (!snap) return;
+
+            const noteEditEl = cardEl.querySelector('.promptlens-snap-note-edit');
+            if (!noteEditEl) return;
+
+            // 替换为输入框
+            const currentNote = snap.note || '';
+            noteEditEl.innerHTML = `
+                <input type="text" class="promptlens-snap-note-input" value="${this._escapeHtml(currentNote)}" placeholder="输入备注..." />
+            `;
+            noteEditEl.classList.add('editing');
+
+            const input = noteEditEl.querySelector('.promptlens-snap-note-input');
+            input.focus();
+
+            // 回车或失焦保存
+            const saveNote = () => {
+                const newNote = input.value.trim();SnapshotEngine.updateNote(snapId, newNote);
+                this._renderContent();};
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveNote();
+                }
+                if (e.key === 'Escape') {
+                    this._renderContent();
+                }
+            });
+
+            input.addEventListener('blur', () => {
+                saveNote();
+            });
+        },
+
+        /** 渲染标签筛选栏 */
         _renderTagBar() {
             if (!panelEl) return;
             const tagBar = panelEl.querySelector('#promptlens-tag-bar');
@@ -1244,26 +1631,125 @@
                         Storage.save();
                         Logger.info(`新增标签: ${trimmed}`);
                         this._renderTagBar();
-                }
+                    }
                 }
             });
         },
 
+        /** ★ 新建笔记 / 快照 — 使用内嵌表单替代 prompt() */
         showNewNoteForm() {
+            if (!panelEl) return;
+            const container = panelEl.querySelector('#promptlens-content');
+            if (!container) return;
+
             if (currentTab === 'snapshots') {
-                const note = prompt('为这个快照添加备注（可留空）:');
-                if (note !== null) {
-                    SnapshotEngine.capture(note);
-                }
+                //★ 快照捕获内嵌表单
+                this._showCaptureForm(container);
                 return;
             }
 
-            const content = prompt('输入笔记内容:');
-            if (content && content.trim()) {
-                NoteManager.add({ content: content.trim() });
-            }
+            // ★ 笔记新建内嵌表单
+            const allTags = Storage.getTags();
+            const tagCheckboxes = allTags.map(tag => {
+                return `<label class="promptlens-edit-tag-label">
+                    <input type="checkbox" value="${this._escapeHtml(tag)}" />
+                    <span>${this._escapeHtml(tag)}</span>
+                </label>`;
+            }).join('');
+
+            const formHtml = `
+                <div class="promptlens-new-note-form">
+                    <div class="promptlens-form-title">📝 新建笔记</div>
+                    <textarea class="promptlens-edit-textarea" rows="5" placeholder="输入笔记内容..." id="promptlens-new-note-content"></textarea>
+                    <div class="promptlens-edit-tags-section">
+                        <div class="promptlens-edit-tags-title">选择标签</div>
+                        <div class="promptlens-edit-tags-list">${tagCheckboxes}</div>
+                    </div>
+                    <div class="promptlens-edit-actions">
+                        <button class="promptlens-edit-save" id="promptlens-new-note-save">保存笔记</button>
+                        <button class="promptlens-edit-cancel" id="promptlens-new-note-cancel">取消</button>
+                    </div>
+                </div>
+            `;
+
+            //在内容区顶部插入表单
+            const formWrapper = document.createElement('div');
+            formWrapper.className = 'promptlens-form-wrapper';
+            formWrapper.innerHTML = formHtml;
+            container.insertBefore(formWrapper, container.firstChild);
+
+            // 聚焦
+            const textarea = container.querySelector('#promptlens-new-note-content');
+            if (textarea) textarea.focus();
+
+            // 保存
+            container.querySelector('#promptlens-new-note-save')?.addEventListener('click', () => {
+                const content = container.querySelector('#promptlens-new-note-content')?.value?.trim();
+                if (!content) {
+                    Logger.warn('笔记内容不能为空');
+                    return;
+                }
+                const selectedTags = [];
+                formWrapper.querySelectorAll('.promptlens-edit-tags-list input[type="checkbox"]:checked').forEach(cb => {
+                    selectedTags.push(cb.value);
+                });
+                NoteManager.add({ content, tags: selectedTags });});
+
+            // 取消
+            container.querySelector('#promptlens-new-note-cancel')?.addEventListener('click', () => {
+                formWrapper.remove();
+            });
         },
 
+        /** ★ 快照捕获内嵌表单 */
+        _showCaptureForm(container) {
+            // 先刷新环境状态
+            EventBridge._readCurrentState();
+
+            const formHtml = `
+                <div class="promptlens-new-note-form promptlens-capture-form">
+                    <div class="promptlens-form-title">📸 捕获环境快照</div>
+                    <div class="promptlens-capture-preview">
+                        <div class="promptlens-capture-row">
+                            <span class="promptlens-capture-label">模型</span>
+                            <span class="promptlens-capture-value">${this._escapeHtml(_currentModel || '未获取')}</span>
+                        </div>
+                        <div class="promptlens-capture-row">
+                            <span class="promptlens-capture-label">API</span>
+                            <span class="promptlens-capture-value">${this._escapeHtml(_currentSource || '未获取')}</span>
+                        </div>
+                        <div class="promptlens-capture-row">
+                            <span class="promptlens-capture-label">预设</span>
+                            <span class="promptlens-capture-value">${this._escapeHtml(_currentPresetName || '未获取')}</span>
+                        </div></div>
+                    <input type="text" class="promptlens-capture-note-input" placeholder="为这个快照添加备注（可选）..." id="promptlens-capture-note" />
+                    <div class="promptlens-edit-actions">
+                        <button class="promptlens-edit-save" id="promptlens-capture-save">📸 捕获快照</button>
+                        <button class="promptlens-edit-cancel" id="promptlens-capture-cancel">取消</button>
+                    </div>
+                </div>
+            `;
+
+            const formWrapper = document.createElement('div');
+            formWrapper.className = 'promptlens-form-wrapper';
+            formWrapper.innerHTML = formHtml;
+            container.insertBefore(formWrapper, container.firstChild);
+
+            const noteInput = container.querySelector('#promptlens-capture-note');
+            if (noteInput) noteInput.focus();
+
+            container.querySelector('#promptlens-capture-save')?.addEventListener('click', () => {
+                const note = container.querySelector('#promptlens-capture-note')?.value?.trim() || '';
+                SnapshotEngine.capture(note);
+                formWrapper.remove();
+            });
+
+            container.querySelector('#promptlens-capture-cancel')?.addEventListener('click', () => {
+                formWrapper.remove();
+            });
+        },
+
+        /** 更新底部状态栏 */
         _updateStatusBar() {
             if (!panelEl) return;
             const countEl = panelEl.querySelector('#promptlens-statusbar-count');
@@ -1272,8 +1758,19 @@
                 const snapCount = Storage.getSnapshots().length;
                 countEl.textContent = `共 ${noteCount} 条笔记 · ${snapCount} 个快照`;
             }
+
+            //★ 更新状态文字，显示当前环境
+            const statusText = panelEl.querySelector('#promptlens-statusbar-text');
+            if (statusText) {
+                if (_currentModel || _currentPresetName) {
+                    statusText.textContent = `${_currentModel || '?'} · ${_currentPresetName || '?'}`;
+                } else {
+                    statusText.textContent = '就绪';
+                }
+            }
         },
 
+        /** 面板拖拽开始 */
         _onDragStart(e) {
             if (e.target.closest('button') || e.target.closest('input')) return;
 
@@ -1304,7 +1801,8 @@
                     newTop = Math.max(0, Math.min(window.innerHeight - 50, newTop));
 
                     panelEl.style.left = newLeft + 'px';
-                    panelEl.style.top = newTop + 'px';panelEl.style.right = 'auto';
+                    panelEl.style.top = newTop + 'px';
+                    panelEl.style.right = 'auto';
                     panelEl.style.bottom = 'auto';
                 }
             };
@@ -1320,8 +1818,7 @@
                     Storage.updateSettings({
                         panelPos: {
                             left: parseInt(panelEl.style.left),
-                            top: parseInt(panelEl.style.top),
-                        },
+                            top: parseInt(panelEl.style.top),},
                     });
                 }
             };
@@ -1332,6 +1829,7 @@
             document.addEventListener('touchend', onEnd);
         },
 
+        /** HTML 转义 */
         _escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
@@ -1340,16 +1838,20 @@
         },
     };
 
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE8: UI — 选中收藏气泡 SaveBubble                │
+    // ═══ MODULE7FloatingPanel 结束 ═══
+
+    //┌─────────────────────────────────────────────────────────┐
+    // │  MODULE 8: UI — 选中收藏气泡 SaveBubble                │
     // └─────────────────────────────────────────────────────────┘
 
     const SaveBubble = {
         _bubbleEl: null,
         _hideTimer: null,
 
+        /** 初始化全局 mouseup 监听 */
         init() {
             document.addEventListener('mouseup', (e) => {
+                if (!pluginEnabled) return;
                 if (panelEl && panelEl.contains(e.target)) return;
                 if (fabEl && fabEl.contains(e.target)) return;
                 if (this._bubbleEl && this._bubbleEl.contains(e.target)) return;
@@ -1370,6 +1872,7 @@
             Logger.success('选中收藏监听已启用');
         },
 
+        /** 提取选中文字所在的楼层信息 */
         _getFloorInfo(selection) {
             try {
                 if (!selection || !selection.anchorNode) return null;
@@ -1384,12 +1887,14 @@
                         floor: parseInt(mesId),
                         messageId: mesId,
                     };
-                }return null;
+                }
+                return null;
             } catch (e) {
                 return null;
             }
         },
 
+        /** 显示收藏气泡 */
         show(text, x, y, floorInfo) {
             this.hide();
 
@@ -1416,7 +1921,7 @@
                 user-select: none;
                 white-space: nowrap;
             `;
-            this._bubbleEl.innerHTML = '📓收藏到掠影';
+            this._bubbleEl.innerHTML = '📓 收藏到掠影';
 
             this._bubbleEl.addEventListener('click', () => {
                 NoteManager.add({
@@ -1439,6 +1944,7 @@
             this._hideTimer = setTimeout(() => this.hide(), 3000);
         },
 
+        /** 隐藏收藏气泡 */
         hide() {
             clearTimeout(this._hideTimer);
             if (this._bubbleEl) {
@@ -1448,10 +1954,13 @@
         },
     };
 
+    // ═══ MODULE 8 SaveBubble 结束 ═══
+
     // ┌─────────────────────────────────────────────────────────┐
-    // │  辅助函数                                                │
+    // │  辅助函数                │
     // └─────────────────────────────────────────────────────────┘
 
+    /** 更新 settings 面板中的数据统计 */
     function updateSettingsStats() {
         const noteStatEl = document.querySelector('#promptlens-stat-notes');
         const snapStatEl = document.querySelector('#promptlens-stat-snapshots');
@@ -1464,11 +1973,11 @@
         }
     }
 
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  MODULE 9: 配置面板注入+ 主入口                          │
+    //┌─────────────────────────────────────────────────────────┐
+    // │  MODULE 9: 配置面板注入 + 主入口                        │
     // └─────────────────────────────────────────────────────────┘
 
-    //★★★ 核心修复：手动 fetch settings.html 并注入到 Extensions 面板 ★★★
+    /**★ 手动 fetch settings.html 并注入到 Extensions 面板 */
     async function loadSettingsPanel() {
         try {
             //★ 加载 settings.html
@@ -1485,11 +1994,10 @@
             document.head.appendChild(cssLink);
 
             // ★ 找到 ST的 Extensions 设置容器并注入
-            // ST 1.15的容器选择器，按优先级尝试多个
             const containerSelectors = [
-                '#extensions_settings',          // 标准容器
-                '#extensions_settings2',         // 备选
-                '.extensions_block',// 另一种布局
+                '#extensions_settings',
+                '#extensions_settings2',
+                '.extensions_block',
             ];
 
             let container = null;
@@ -1499,8 +2007,7 @@
             }
 
             if (!container) {
-                // ★ 如果找不到标准容器，等待 ST 加载完成后重试
-                Logger.warn('Extensions 面板容器未找到，将在 2 秒后重试...');
+                Logger.warn('Extensions 面板容器未找到，将在2 秒后重试...');
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
                 for (const selector of containerSelectors) {
@@ -1514,10 +2021,9 @@
                 return false;
             }
 
-            // ★ 创建插件专属容器并注入
             const wrapper = document.createElement('div');
             wrapper.id = 'promptlens-extension-block';
-            wrapper.classList.add('extension_container');  // ST 标准 class
+            wrapper.classList.add('extension_container');
             wrapper.innerHTML = html;
             container.appendChild(wrapper);
 
@@ -1526,15 +2032,13 @@
 
         } catch (err) {
             Logger.error('配置面板加载失败', err);
-
-            // ★ 降级方案：直接用 JS 创建一个最小化的设置面板
             Logger.info('尝试使用内联降级方案创建配置面板...');
             createFallbackSettingsPanel();
             return false;
         }
     }
 
-    // ★ 降级方案：如果 fetch 失败，用纯 JS 创建面板
+    /** ★ 降级方案：如果 fetch 失败，用纯 JS 创建面板 */
     function createFallbackSettingsPanel() {
         const containerSelectors = [
             '#extensions_settings',
@@ -1574,7 +2078,7 @@
                         <span style="position:absolute;inset:0;background:#333;border-radius:22px;transition:background 0.25s;"></span>
                     </label>
                 </div>
-                                <!-- ★ 悬浮球开关 -->
+
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
                     <label style="font-size:13px;font-weight:500;">显示悬浮球</label>
                     <label style="position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;">
@@ -1593,7 +2097,8 @@
 
                 <div>
                     <div style="font-size:12px;font-weight:600;color:#999;margin-bottom:8px;">运行日志</div>
-                    <div id="promptlens-log-container" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;max-height:220px;min-height:80px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.7;"><div class="promptlens-log-empty" style="color:#555;text-align:center;padding:16px 0;font-style:italic;">暂无日志</div>
+                    <div id="promptlens-log-container" style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 10px;max-height:220px;min-height:80px;overflow-y:auto;font-family:monospace;font-size:11px;line-height:1.7;">
+                        <div class="promptlens-log-empty" style="color:#555;text-align:center;padding:16px 0;font-style:italic;">暂无日志</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:8px;">
                         <button id="promptlens-log-clear" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">清空日志</button>
@@ -1614,7 +2119,7 @@
                         <button id="promptlens-export" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">导出数据</button>
                         <button id="promptlens-import" style="padding:5px 12px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:rgba(255,255,255,0.04);color:#bbb;font-size:12px;cursor:pointer;">导入数据</button>
                 <button id="promptlens-clear-all" style="padding:5px 12px;border:1px solid rgba(231,76,60,0.25);border-radius:6px;background:rgba(255,255,255,0.04);color:#e74c3c;font-size:12px;cursor:pointer;">⚠ 清空所有数据</button>
-                        <input type="file" id="promptlens-import-file" accept=".json" style="display:none;" />
+                <input type="file" id="promptlens-import-file" accept=".json" style="display:none;" />
                     </div>
                 </div>
             </div>
@@ -1624,14 +2129,14 @@
         Logger.success('配置面板已通过降级方案创建');
     }
 
-        function bindSettingsEvents() {
+    /**绑定 settings 面板中的所有事件 */
+    function bindSettingsEvents() {
         // ★ 折叠/展开功能
         const collapseToggle = document.querySelector('#promptlens-collapse-toggle');
         const collapseBody = document.querySelector('#promptlens-settings-body');
         const collapseArrow = document.querySelector('#promptlens-collapse-arrow');
 
         if (collapseToggle && collapseBody && collapseArrow) {
-            // 读取折叠状态
             const isCollapsed = Storage.getSettings().settingsCollapsed === true;
             if (isCollapsed) {
                 collapseBody.classList.add('collapsed');
@@ -1750,8 +2255,8 @@
     }
     // ═══ bindSettingsEvents 结束 ═══
 
-    // ★ 主初始化
-       function init() {
+    /**★ 主初始化 */
+    function init() {
         const startTime = performance.now();
         Logger.info(`${PLUGIN_NAME} v${VERSION} 初始化开始...`);
 
@@ -1767,7 +2272,7 @@
 
         EventBridge.init();
 
-        //★ 根据设置决定是否显示悬浮球
+        // ★ 根据设置决定是否显示悬浮球
         if (settings.fabVisible !== false) {
             FloatingBall.create();
         } else {
@@ -1786,12 +2291,19 @@
     }
     // ═══ init 结束 ═══
 
-    
-    // ┌─────────────────────────────────────────────────────────┐
-    // │  启动                │
+    /** 关闭插件 */
+    function shutdown() {
+        EventBridge.destroy();
+        FloatingBall.destroy();
+        FloatingPanel.destroy();
+        Logger.info('插件已关闭');
+    }
+    // ═══ shutdown 结束 ═══
+
+    //┌─────────────────────────────────────────────────────────┐
+    // │  启动                                                   │
     // └─────────────────────────────────────────────────────────┘
 
-    // ★★★ 修复后的启动流程 ★★★
     if (typeof jQuery !== 'undefined') {
         jQuery(async () => {
             //1. 先注入配置面板到 Extensions 区域
@@ -1802,16 +2314,33 @@
 
             // 3. 初始化插件主体
             init();
+
+            // ★ 4. 延迟再次读取环境状态（等ST 完全加载）
+            setTimeout(() => {
+                if (pluginEnabled) {
+                    EventBridge._readCurrentState();
+                    FloatingPanel._updateStatusBar();
+                    Logger.info('延迟环境状态刷新完成');
+                }
+            }, 3000);
         });
     } else {
         document.addEventListener('DOMContentLoaded', async () => {
             await loadSettingsPanel();
             bindSettingsEvents();
-            init();
+            init();setTimeout(() => {
+                if (pluginEnabled) {
+                    EventBridge._readCurrentState();
+                    FloatingPanel._updateStatusBar();
+                }
+            }, 3000);
         });
     }
 
+    // ═══ MODULE 9 主入口 结束 ═══
+
 })();
+
 
 
 
