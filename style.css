@@ -1279,6 +1279,18 @@
     60%  { box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.5); background: rgba(231, 76, 60, 0.05); }
     100% { box-shadow: none; background: transparent; }
 }
+/* ★ 思维链收藏按钮 */
+.promptlens-thinking-btn {
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.15s, transform 0.15s;
+    user-select: none;
+}
+.promptlens-thinking-btn:hover {
+    opacity: 1;
+    transform: scale(1.15);
+}
 
 
 
