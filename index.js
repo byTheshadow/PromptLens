@@ -200,46 +200,55 @@
             };
         },
 
-        /** 从 localStorage 加载数据 */
         load() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) {
-                    this._data = this._defaultData();
-                    Logger.info('首次运行，已创建默认数据');
-                    this.save();
-                    return this._data;
-                }
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+            this._data = this._defaultData();
+            Logger.info('首次运行，已创建默认数据');
+            this.save();
+            return this._data;
+        }
 
-                const parsed = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
 
-                if (!parsed._version) {
-                    Logger.warn('数据格式异常（缺少 _version），已重置为默认值');
-                    this._data = this._defaultData();
-                    this.save();
-                    return this._data;
-                }
+        if (!parsed._version) {
+            Logger.warn('数据格式异常（缺少 _version），已重置为默认值');
+            this._data = this._defaultData();
+            this.save();
+            return this._data;
+        }
 
-                this._data = Object.assign(this._defaultData(), parsed);
-                DEFAULT_TAGS.forEach(tag => {
-                    if (!this._data.tags.includes(tag)) {
-                        this._data.tags.push(tag);
-                    }
-                });
+        // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
+        const defaults = this._defaultData();
+        this._data = {
+            notes:     Array.isArray(parsed.notes)     ? parsed.notes     : defaults.notes,
+            snapshots: Array.isArray(parsed.snapshots) ? parsed.snapshots : defaults.snapshots,
+            tags:      Array.isArray(parsed.tags)      ? parsed.tags      : defaults.tags,
+            settings:  Object.assign(defaults.settings, parsed.settings || {}),
+            _version:  parsed._version || VERSION,
+        };
 
-                const noteCount = this._data.notes.length;
-                const snapCount = this._data.snapshots.length;
-                const tagCount = this._data.tags.length;
-                Logger.success(`数据加载完成 —笔记: ${noteCount}条, 快照: ${snapCount}条, 标签: ${tagCount}个`);
-
-                return this._data;
-            } catch (err) {
-                Logger.error('数据加载失败，已重置为默认值', err);
-                this._data = this._defaultData();
-                this.save();
-                return this._data;
+        // 补充缺失的默认标签
+        DEFAULT_TAGS.forEach(tag => {
+            if (!this._data.tags.includes(tag)) {
+                this._data.tags.push(tag);
             }
-        },
+        });
+
+        const noteCount = this._data.notes.length;
+        const snapCount = this._data.snapshots.length;
+        const tagCount  = this._data.tags.length;
+        Logger.success(`数据加载完成 — 笔记: ${noteCount}条, 快照: ${snapCount}条, 标签: ${tagCount}个`);
+
+        return this._data;
+    } catch (err) {
+        Logger.error('数据加载失败，已重置为默认值', err);
+        this._data = this._defaultData();
+        this.save();
+        return this._data;
+    }
+},
 
         /** 保存数据到 localStorage */
         save() {
@@ -2224,7 +2233,8 @@
         // 启用开关
         const toggle = document.querySelector('#promptlens-toggle');
         if (toggle) {
-            toggle.checked = Storage.getSettings().enabled !== false;
+           // ★ 用 setAttribute 而不是直接赋值，避免触发 change 事件
+toggle.checked = Storage.getSettings().enabled !== false;
             toggle.addEventListener('change', () => {
                 const enabled = toggle.checked;
                 Storage.updateSettings({ enabled });if (enabled) {
@@ -2328,6 +2338,10 @@
 
     /**★ 主初始化 */
     function init() {
+       // ★ 防止重复初始化导致状态混乱
+    if (fabEl || panelEl) {
+        shutdown();
+    }
         const startTime = performance.now();
         Logger.info(`${PLUGIN_NAME} v${VERSION} 初始化开始...`);
 
