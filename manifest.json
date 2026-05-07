@@ -9,6 +9,5 @@
   "author": "Shadow",
   "version": "0.1.0",
   "homePage": "https://github.com/Shadow/PromptLens",
-  "auto_update": false,
-  "description": "预设工程师的读书笔记插件 — 笔记、收藏、快照一体化"
+  "auto_update": false
 }
