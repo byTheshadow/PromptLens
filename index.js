@@ -227,7 +227,6 @@
         // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
         // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
         const defaults = this._defaultData();
-},
                 this._data = {
             notes:     Array.isArray(parsed.notes)     ? parsed.notes     : defaults.notes,
             snapshots: Array.isArray(parsed.snapshots) ? parsed.snapshots : defaults.snapshots,
