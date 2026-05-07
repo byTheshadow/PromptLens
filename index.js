@@ -29,6 +29,9 @@
     let currentTab = 'notes';
     let currentFilterTag = null;
     let currentSearchKeyword = '';
+    let diffSelectingId = null;    // ★ 快照对比：第一个选中的快照 ID，null=未在选择模式
+    
+
 
     // 快照引擎追踪状态
     let _currentModel = '';
@@ -220,14 +223,21 @@
         }
 
         // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
+        // ★ 修复：深合并，避免 notes/snapshots 被空数组覆盖
         const defaults = this._defaultData();
         this._data = {
             notes:     Array.isArray(parsed.notes)     ? parsed.notes     : defaults.notes,
             snapshots: Array.isArray(parsed.snapshots) ? parsed.snapshots : defaults.snapshots,
             tags:      Array.isArray(parsed.tags)      ? parsed.tags      : defaults.tags,
-            settings:  Object.assign(defaults.settings, parsed.settings || {}),
+            settings: {
+                ...defaults.settings,
+                ...(parsed.settings || {}),
+                fabPos:   { ...defaults.settings.fabPos,  ...(parsed.settings?.fabPos  || {}) },
+                panelPos: parsed.settings?.panelPos ?? defaults.settings.panelPos,
+            },
             _version:  parsed._version || VERSION,
         };
+
 
         // 补充缺失的默认标签
         DEFAULT_TAGS.forEach(tag => {
@@ -1510,7 +1520,7 @@
         },
 
         /** 渲染快照列表 */
-        _renderSnapshotsList(container) {
+                _renderSnapshotsList(container) {
             let snapshots = SnapshotEngine.getAll();
 
             if (currentSearchKeyword) {
@@ -1527,15 +1537,27 @@
                     <div class="promptlens-empty-state">
                         <div class="promptlens-empty-state-icon">📸</div>
                         <div class="promptlens-empty-state-text">
-                            还没有快照<br/>
-                            <span style="color:#666;font-size:12px;">点击"📸 快照"按钮捕获当前预设状态</span>
+                            还没有快照<br/><span style="color:#666;font-size:12px;">点击"📸 快照"按钮捕获当前预设状态</span>
                         </div>
                     </div>
                 `;
                 return;
             }
 
-            //★ 显示当前环境信息摘要
+            // ★ 对比选择模式提示条
+            let diffBar = '';
+            if (diffSelectingId) {
+                const selectedSnap = SnapshotEngine.getAll().find(s => s.id === diffSelectingId);
+                const selectedName = selectedSnap ? selectedSnap.presetName : '未知';
+                diffBar = `
+                    <div class="promptlens-diff-bar">
+                        <span class="promptlens-diff-bar-text">⚖️ 已选中「${this._escapeHtml(selectedName)}」，请点击另一个快照的 ⚖️ 按钮进行对比</span>
+                <button class="promptlens-diff-bar-cancel" id="promptlens-diff-cancel">取消</button>
+                    </div>
+                `;
+            }
+
+            // ★ 当前环境信息摘要
             let envSummary = '';
             if (_currentModel || _currentPresetName || _currentSource) {
                 envSummary = `
@@ -1548,11 +1570,47 @@
                 `;
             }
 
-            container.innerHTML = envSummary + snapshots.map(snap => this._renderSnapshotCard(snap)).join('');
+            container.innerHTML = diffBar + envSummary + snapshots.map(snap => this._renderSnapshotCard(snap)).join('');
+
+            // ★ 对比取消按钮
+            container.querySelector('#promptlens-diff-cancel')?.addEventListener('click', () => {
+                diffSelectingId = null;
+                this._renderContent();
+            });
+
+            // ★ 高亮当前选中的对比快照
+            if (diffSelectingId) {
+                const selectedCard = container.querySelector(`.promptlens-snapshot-card[data-id="${diffSelectingId}"]`);
+                if (selectedCard) {
+                    selectedCard.classList.add('diff-selected');
+                }
+            }
 
             // 绑定快照卡片事件
             container.querySelectorAll('.promptlens-snapshot-card').forEach(card => {
                 const snapId = card.dataset.id;
+
+                // ★ 对比按钮
+                card.querySelector('.promptlens-snap-diff-btn')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!diffSelectingId) {
+                        //第一次点击：进入选择模式
+                        diffSelectingId = snapId;
+                        Logger.info(`快照对比：已选中第一个快照 — ID: ${snapId}`);
+                        this._renderContent();
+                    } else if (diffSelectingId === snapId) {
+                        // 点击了同一个：取消选择
+                        diffSelectingId = null;
+                        this._renderContent();
+                    } else {
+                        // 第二次点击：执行对比
+                        const idA = diffSelectingId;
+                        const idB = snapId;
+                        diffSelectingId = null;
+                        Logger.info(`快照对比：开始对比 — A: ${idA}, B: ${idB}`);
+                        this._showDiffView(idA, idB);
+                    }
+                });
 
                 // 删除
                 card.querySelector('.promptlens-card-delete')?.addEventListener('click', (e) => {
@@ -1571,13 +1629,13 @@
                     });
                 });
 
-                // ★ 快照备注编辑
+                // 快照备注编辑
                 card.querySelector('.promptlens-snap-note-edit')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this._showSnapNoteEditForm(snapId, card);
                 });
 
-                // ★ 点击条目区展开/折叠
+                // 点击条目区展开/折叠
                 const entriesEl = card.querySelector('.promptlens-snap-entries');
                 if (entriesEl) {
                     entriesEl.addEventListener('click', () => {
@@ -1588,7 +1646,7 @@
             });
         },
 
-        /** 渲染单个快照卡片 HTML */
+       /** 渲染单个快照卡片 HTML */
         _renderSnapshotCard(snap) {
             const time = new Date(snap.timestamp).toLocaleString('zh-CN', {
                 month: '2-digit', day: '2-digit',
@@ -1632,8 +1690,9 @@
                         <span class="promptlens-card-source">${time}</span>
                     </div>
                     <div class="promptlens-card-actions">
+                    <button class="promptlens-snap-diff-btn" title="对比">⚖️</button>
                         <button class="promptlens-card-delete" title="删除">🗑️</button>
-                    </div>
+                        </div>
                 </div>
             `;
         },
@@ -1675,6 +1734,152 @@
                 saveNote();
             });
         },
+                /** ★ 渲染快照 Diff 对比视图 */
+        _showDiffView(idA, idB) {
+            if (!panelEl) return;
+            const container = panelEl.querySelector('#promptlens-content');
+            if (!container) return;
+
+            const result = SnapshotEngine.diff(idA, idB);
+            if (!result) {
+                Logger.warn('快照对比失败 — 未找到指定快照');
+                return;
+            }
+
+            const { snapA, snapB, modelChanged, sourceChanged, presetChanged, entries } = result;
+
+            const timeA = new Date(snapA.timestamp).toLocaleString('zh-CN', {
+                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+            });
+            const timeB = new Date(snapB.timestamp).toLocaleString('zh-CN', {
+                month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+            });
+
+            // ★ 构建字段对比行
+            const fieldRow = (label, valA, valB, changed) => {
+                if (changed) {
+                    return `
+                        <div class="promptlens-diff-field changed">
+                            <span class="promptlens-diff-field-label">${label}</span>
+                            <span class="promptlens-diff-field-val old">${this._escapeHtml(valA)}</span>
+                            <span class="promptlens-diff-field-arrow">→</span>
+                            <span class="promptlens-diff-field-val new">${this._escapeHtml(valB)}</span>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="promptlens-diff-field same">
+                        <span class="promptlens-diff-field-label">${label}</span>
+                        <span class="promptlens-diff-field-val">${this._escapeHtml(valA)}</span>
+                    </div>
+                `;
+            };
+
+            // ★ 构建条目差异列表
+            let entriesHtml = '';
+            if (entries.removed.length > 0) {
+                entriesHtml += entries.removed.map(e =>
+                    `<div class="promptlens-diff-entry removed"><span class="promptlens-diff-entry-icon">−</span>${this._escapeHtml(e)}</div>`
+                ).join('');
+            }
+            if (entries.added.length > 0) {
+                entriesHtml += entries.added.map(e =>
+                    `<div class="promptlens-diff-entry added"><span class="promptlens-diff-entry-icon">+</span>${this._escapeHtml(e)}</div>`
+                ).join('');
+            }
+            if (entries.unchanged.length > 0) {
+                entriesHtml += entries.unchanged.map(e =>
+                    `<div class="promptlens-diff-entry unchanged"><span class="promptlens-diff-entry-icon">·</span>${this._escapeHtml(e)}</div>`
+                ).join('');
+            }
+
+            if (!entriesHtml) {
+                entriesHtml = '<div class="promptlens-diff-entry unchanged" style="color:#666;">无条目记录</div>';
+            }
+
+            // ★ 总结变更数量
+            const totalChanges = (modelChanged ? 1 : 0) + (sourceChanged ? 1 : 0) + (presetChanged ? 1 : 0) + entries.added.length + entries.removed.length;
+            const summaryText = totalChanges === 0
+                ? '两个快照完全相同'
+                : `发现${totalChanges} 处差异`;
+
+            // ★ 评分对比
+            const ratingA = snapA.rating || 0;
+            const ratingB = snapB.rating || 0;
+            const ratingStars = (r) => '★'.repeat(r) + '☆'.repeat(5 - r);
+            let ratingHtml = '';
+            if (ratingA || ratingB) {
+                ratingHtml = `
+                    <div class="promptlens-diff-section">
+                        <div class="promptlens-diff-section-title">评分</div>
+                        <div class="promptlens-diff-rating-row">
+                            <span class="promptlens-diff-rating-label">A</span>
+                            <span class="promptlens-diff-rating-stars ${ratingA ? '' : 'none'}">${ratingA ? ratingStars(ratingA) : '未评分'}</span>
+                            <span class="promptlens-diff-rating-label">B</span>
+                            <span class="promptlens-diff-rating-stars ${ratingB ? '' : 'none'}">${ratingB ? ratingStars(ratingB) : '未评分'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="promptlens-diff-view">
+                    <div class="promptlens-diff-header">
+                        <div class="promptlens-diff-title">⚖️ 快照对比</div>
+                        <button class="promptlens-diff-close" id="promptlens-diff-close">✕ 关闭</button>
+                    </div>
+
+                    <div class="promptlens-diff-summary ${totalChanges === 0 ? 'identical' : 'different'}">
+                        ${summaryText}
+                    </div>
+
+                    <div class="promptlens-diff-columns">
+                        <div class="promptlens-diff-col-header">
+                            <div class="promptlens-diff-col a">
+                                <span class="promptlens-diff-col-label">A</span>
+                                <span class="promptlens-diff-col-name">${this._escapeHtml(snapA.presetName)}</span>
+                                <span class="promptlens-diff-col-time">${timeA}</span>
+                            </div>
+                            <div class="promptlens-diff-col b">
+                                <span class="promptlens-diff-col-label">B</span>
+                                <span class="promptlens-diff-col-name">${this._escapeHtml(snapB.presetName)}</span>
+                                <span class="promptlens-diff-col-time">${timeB}</span>
+                            </div>
+                        </div></div>
+
+                    <div class="promptlens-diff-section">
+                        <div class="promptlens-diff-section-title">环境配置</div>
+                        ${fieldRow('模型', snapA.model, snapB.model, modelChanged)}
+                        ${fieldRow('API', snapA.apiSource, snapB.apiSource, sourceChanged)}
+                        ${fieldRow('预设', snapA.presetName, snapB.presetName, presetChanged)}
+                    </div>
+
+                    <div class="promptlens-diff-section">
+                        <div class="promptlens-diff-section-title">
+                            预设条目
+                            <span class="promptlens-diff-entry-count">
+                                ${entries.added.length > 0 ? `<span class="added">+${entries.added.length}</span>` : ''}
+                                ${entries.removed.length > 0 ? `<span class="removed">-${entries.removed.length}</span>` : ''}
+                                ${entries.unchanged.length > 0 ? `<span class="unchanged">${entries.unchanged.length} 不变</span>` : ''}
+                            </span>
+                        </div>
+                        <div class="promptlens-diff-entries">
+                            ${entriesHtml}
+                        </div>
+                    </div>
+
+                    ${ratingHtml}
+                </div>
+            `;
+
+            // 关闭按钮
+            container.querySelector('#promptlens-diff-close')?.addEventListener('click', () => {
+                this._renderContent();
+            });
+
+            Logger.success(`快照对比完成 — ${summaryText}`);
+        },
+
 
         /** 渲染标签筛选栏 */
         _renderTagBar() {
