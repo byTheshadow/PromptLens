@@ -1455,35 +1455,65 @@
                         NoteManager.delete(noteId);
                 }
                 });
+                                // ★ 楼层跳转
+                card.querySelectorAll('.promptlens-card-floor-link').forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const floor = link.dataset.floor;
+                        if (!floor) return;
+
+                        const targetEl = document.querySelector(`.mes[mesid="${floor}"]`);
+                        if (!targetEl) {
+                            Logger.warn(`楼层跳转失败 — 未找到楼层 #${floor}，可能已被清除`);
+                            return;
+                        }
+
+                        // 滚动到目标楼层
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                        // ★ 短暂高亮：加 class → 1.5s 后移除
+                        targetEl.classList.add('promptlens-floor-highlight');
+                        setTimeout(() => {
+                            targetEl.classList.remove('promptlens-floor-highlight');
+                        }, 1500);
+
+                        Logger.info(`楼层跳转 — 跳转到楼层 #${floor}`);
+                    });
+                });
+
             });
         },
 
         /** 渲染单个笔记卡片 HTML */
-        _renderNoteCard(note) {
-            const time = new Date(note.createdAt).toLocaleString('zh-CN', {
-                month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit',
-            });
-            const tags = (note.tags || []).map(t =>
-                `<span class="promptlens-card-tag">${this._escapeHtml(t)}</span>`
-            ).join('');
-            const floor = note.sourceFloor != null ? `📍楼层 #${note.sourceFloor} · ` : '';
+_renderNoteCard(note) {
+    const time = new Date(note.createdAt).toLocaleString('zh-CN', {
+        month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+    });
+    const tags = (note.tags || []).map(t =>
+        `<span class="promptlens-card-tag">${this._escapeHtml(t)}</span>`
+    ).join('');
 
-            return `
-                <div class="promptlens-note-card" data-id="${note.id}">
-                    <div class="promptlens-card-content">${this._escapeHtml(note.content)}</div>
-                    <div class="promptlens-card-meta">
-                        <span class="promptlens-card-source">${floor}${time}</span>
-                    </div>
-                    ${tags ? `<div class="promptlens-card-tags">${tags}</div>` : ''}
-                <div class="promptlens-card-actions">
-                        <button class="promptlens-card-copy" title="复制内容">📋</button>
-                        <button class="promptlens-card-edit" title="编辑">✏️</button>
-                        <button class="promptlens-card-delete" title="删除">🗑️</button>
-                    </div>
-                </div>
-            `;
-        },
+    // ★ 楼层跳转：改为可点击的 span，data-floor 存楼层号
+    const floor = note.sourceFloor != null
+        ? `<span class="promptlens-card-floor-link" data-floor="${note.sourceFloor}" title="点击跳转到楼层 #${note.sourceFloor}">📍楼层 #${note.sourceFloor}</span> · `
+        : '';
+
+    return `
+        <div class="promptlens-note-card" data-id="${note.id}">
+            <div class="promptlens-card-content">${this._escapeHtml(note.content)}</div>
+            <div class="promptlens-card-meta">
+                <span class="promptlens-card-source">${floor}${time}</span>
+            </div>
+            ${tags ? `<div class="promptlens-card-tags">${tags}</div>` : ''}
+            <div class="promptlens-card-actions">
+                <button class="promptlens-card-copy" title="复制内容">📋</button>
+                <button class="promptlens-card-edit" title="编辑">✏️</button>
+                <button class="promptlens-card-delete" title="删除">🗑️</button>
+            </div>
+        </div>
+    `;
+},
 
         /** ★ 在卡片内显示笔记编辑表单 */
         _showNoteEditForm(noteId, cardEl) {

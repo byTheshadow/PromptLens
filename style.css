@@ -1258,6 +1258,27 @@
     color: #555;
     font-size: 11px;
 }
+/* ★ 楼层跳转链接 */
+.promptlens-card-floor-link {
+    color: #e74c3c;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+}
+.promptlens-card-floor-link:hover {
+    color: #ff6b6b;
+}
+
+/* ★ 楼层高亮（跳转后短暂闪烁） */
+.mes.promptlens-floor-highlight {
+    animation: promptlens-floor-flash 1.5s ease forwards;
+}
+@keyframes promptlens-floor-flash {
+    0%   { box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.8); background: rgba(231, 76, 60, 0.08); }
+    60%  { box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.5); background: rgba(231, 76, 60, 0.05); }
+    100% { box-shadow: none; background: transparent; }
+}
 
 
 
