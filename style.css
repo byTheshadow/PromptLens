@@ -1,6 +1,15 @@
 /* ═══════════════════════════════════════════════
-   PromptLens · 掠影 — 悬浮球 + 浮动面板全局样式
+   PromptLens · 掠影 — 暗黑血刃主题 (Dark Crimson)
+   悬浮球 + 浮动面板全局样式
    ═══════════════════════════════════════════════ */
+
+/* ─── 全局基础设定 (作用于面板内部) ─── */
+#promptlens-panel, #promptlens-fab {
+  /* 优雅的中英文系统字体栈，无需网络请求 */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 /* ─── 悬浮球 ─── */
 #promptlens-fab {
@@ -9,52 +18,54 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: #111111;
-  border: 2px solid #c0392b;
+  background: linear-gradient(145deg, #1f1f1f, #0a0a0a);
+  border: 1px solid #c0392b;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: grab;
   user-select: none;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.6),
-    0 0 0 0 rgba(192, 57, 43, 0);
-  transition: box-shadow 0.3s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   -webkit-tap-highlight-color: transparent;
   touch-action: none;
 }
 
 #promptlens-fab:hover {
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.7),
-    0 0 20px rgba(192, 57, 43, 0.4),
-    0 0 40px rgba(192, 57, 43, 0.15);
-  transform: scale(1.08);
+  border-color: #e74c3c;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.9), 0 0 16px rgba(231, 76, 60, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
 }
 
 #promptlens-fab:active {
   cursor: grabbing;
   transform: scale(0.95);
-  transition: transform 0.1s ease;
 }
 
 #promptlens-fab .promptlens-fab-icon {
-  font-size: 22px;
+  font-size: 20px;
+  color: #d1d1d1;
   line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 0 4px rgba(231, 76, 60, 0.5));
+  transition: color 0.3s;
 }
 
-/* 环境变更角标 */
+#promptlens-fab:hover .promptlens-fab-icon {
+  color: #fff;
+  text-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+}
+
+/* 环境变更角标 (替换了突兀的橙色，改为跳动的猩红) */
 #promptlens-fab .promptlens-fab-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 10px;
-  height: 10px;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #e67e22;
-  border: 2px solid #111111;
+  background: radial-gradient(circle, #ff4d4d, #c0392b);
+  border: 2px solid #111;
+  box-shadow: 0 0 8px rgba(231, 76, 60, 0.8);
   display: none;
   animation: promptlens-badge-pulse 2s infinite;
 }
@@ -64,71 +75,67 @@
 }
 
 @keyframes promptlens-badge-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.85); }
+  0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+  70% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 6px rgba(231, 76, 60, 0); }
+  100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
 }
 
 /* ─── 浮动面板 ─── */
 #promptlens-panel {
   position: fixed;
   z-index: 10001;
-  width: 420px;
-  height: 560px;
-  min-width: 340px;
-  min-height: 400px;
-  background: rgba(13, 13, 13, 0.97);
-  border: 1px solid rgba(192, 57, 43, 0.25);
-  border-radius: 12px;
-  box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.7),
-    0 0 1px rgba(192, 57, 43, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  width: 440px; /* 稍微加宽以提升阅读体验 */
+  height: 600px;
+  min-width: 360px;
+  min-height: 440px;
+  /* 极致的毛玻璃与暗黑黑底 */
+  background: rgba(13, 13, 13, 0.85);
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   display: none;
   flex-direction: column;
   overflow: hidden;
   resize: both;
-  font-family: inherit;
-  color: #ccc;
+  color: #c4c4c4;
   opacity: 0;
-  transform: scale(0.96) translateY(10px);
-  filter: blur(2px);
-  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.22s ease;
+  transform: scale(0.96) translateY(12px);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
 }
 
 #promptlens-panel.visible {
-  display: flex;
+  display: flex; /* 绝对不能删 */
   opacity: 1;
   transform: scale(1) translateY(0);
-  filter: blur(0);
   pointer-events: auto;
 }
 
-/* 顶部红色渐变条 */
+/* 顶部科幻红条 */
 #promptlens-panel::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #8b1a1a, #c0392b 40%, #e74c3c 60%, #c0392b);
-  border-radius: 12px 12px 0 0;
-  z-index: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #e74c3c, #8b0000, #e74c3c, transparent);
+  border-radius: 14px 14px 0 0;
+  opacity: 0.8;
 }
 
 /* ─── 标题栏 ─── */
 .promptlens-panel-titlebar {
   display: flex;
   align-items: center;
-  padding: 10px 14px 8px;
+  padding: 14px 18px 10px;
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(to bottom, rgba(20,20,20,0.6), transparent);
 }
 
 .promptlens-panel-titlebar:active {
@@ -138,108 +145,96 @@
 .promptlens-panel-title {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #e74c3c;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f5f5f5;
+  letter-spacing: 0.5px;
   flex-shrink: 0;
-  letter-spacing: 0.3px;
 }
 
 .promptlens-panel-title-dot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #c0392b;
-  box-shadow: 0 0 8px rgba(192, 57, 43, 0.7), 0 0 16px rgba(192, 57, 43, 0.3);
-  animation: promptlens-dot-breathe 3s ease-in-out infinite;
-}
-
-@keyframes promptlens-dot-breathe {
-  0%, 100% { box-shadow: 0 0 6px rgba(192, 57, 43, 0.6), 0 0 12px rgba(192, 57, 43, 0.2); }
-  50% { box-shadow: 0 0 10px rgba(231, 76, 60, 0.9), 0 0 20px rgba(231, 76, 60, 0.4); }
+  background: #e74c3c;
+  box-shadow: 0 0 8px #e74c3c, 0 0 2px #fff inset;
 }
 
 /* 标签切换 */
 .promptlens-panel-tabs {
   display: flex;
-  gap: 2px;
-  margin-left: 16px;
+  gap: 4px;
+  margin-left: 20px;
   flex: 1;
 }
 
 .promptlens-panel-tab {
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
+  color: #7a7a7a;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s, transform 0.15s;
-  border: none;
-  background: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  background: transparent;
+  letter-spacing: 0.5px;
 }
 
 .promptlens-panel-tab:hover {
-  color: #bbb;
+  color: #e0e0e0;
   background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-1px);
-}
-
-.promptlens-panel-tab:active {
-  transform: translateY(0);
 }
 
 .promptlens-panel-tab.active {
-  color: #e74c3c;
-  background: rgba(231, 76, 60, 0.1);
-  box-shadow: inset 0 -2px 0 rgba(231, 76, 60, 0.5);
+  color: #fff;
+  background: rgba(192, 57, 43, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 /* 窗口控制按钮 */
 .promptlens-panel-controls {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .promptlens-panel-ctrl-btn {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
-  border: none;
+  border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.03);
-  color: #666;
+  color: #888;
   font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s, color 0.2s, transform 0.15s;
+  transition: all 0.2s ease;
 }
 
 .promptlens-panel-ctrl-btn:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: #ccc;
-  transform: scale(1.1);
-}
-
-.promptlens-panel-ctrl-btn:active {
-  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eee;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .promptlens-panel-ctrl-btn.close:hover {
-  background: rgba(231, 76, 60, 0.18);
-  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.2);
+  color: #ff4d4d;
+  border-color: rgba(231, 76, 60, 0.4);
 }
 
 /* ─── 工具栏 ─── */
 .promptlens-panel-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 12px;
+  padding: 10px 18px;
   flex-shrink: 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -251,75 +246,76 @@
 
 .promptlens-search-icon {
   position: absolute;
-  left: 10px;
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
-  color: #444;
+  font-size: 13px;
+  color: #666;
   pointer-events: none;
   transition: color 0.2s;
 }
 
-.promptlens-search-wrap:focus-within .promptlens-search-icon {
-  color: #c0392b;
-}
-
 .promptlens-search-input {
   width: 100%;
-  padding: 6px 10px 6px 30px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 8px 12px 8px 34px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #ccc;
-  font-size: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #eee;
+  font-size: 13px;
   outline: none;
-  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-sizing: border-box;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .promptlens-search-input::placeholder {
-  color: #444;
+  color: #555;
 }
 
 .promptlens-search-input:focus {
-  border-color: rgba(192, 57, 43, 0.5);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+  border-color: rgba(231, 76, 60, 0.6);
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+.promptlens-search-input:focus + .promptlens-search-icon {
+  color: #e74c3c;
 }
 
 .promptlens-toolbar-btn {
-  padding: 6px 12px;
+  padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(192, 57, 43, 0.3);
-  background: rgba(192, 57, 43, 0.07);
+  border: 1px solid rgba(192, 57, 43, 0.4);
+  background: linear-gradient(180deg, rgba(231, 76, 60, 0.1), rgba(192, 57, 43, 0.05));
   color: #e74c3c;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .promptlens-toolbar-btn:hover {
-  background: rgba(192, 57, 43, 0.16);
-  box-shadow: 0 0 10px rgba(192, 57, 43, 0.2);
+  background: linear-gradient(180deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.1));
+  border-color: #e74c3c;
+  color: #ff6b6b;
   transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
-.promptlens-toolbar-btn:active {
-  transform: translateY(0) scale(0.97);
-}
-
-/* ─── 标签筛选条 ─── */
+/* ─── 标签筛选条 (视觉层次重塑) ─── */
 .promptlens-panel-tags {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 14px;
+  gap: 8px;
+  padding: 10px 18px;
   flex-shrink: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .promptlens-panel-tags::-webkit-scrollbar {
@@ -327,59 +323,56 @@
 }
 
 .promptlens-tag-chip {
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  color: #777;
+  color: #888;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   flex-shrink: 0;
 }
 
 .promptlens-tag-chip:hover {
-  color: #ccc;
-  background: rgba(255, 255, 255, 0.07);
-  transform: translateY(-1px) scale(1.04);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.promptlens-tag-chip:active {
-  transform: scale(0.96);
+  color: #d1d1d1;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
 .promptlens-tag-chip.active {
-  color: #e74c3c;
-  background: rgba(231, 76, 60, 0.12);
-  border-color: rgba(231, 76, 60, 0.35);
-  box-shadow: 0 0 8px rgba(231, 76, 60, 0.15);
+  color: #fff;
+  background: linear-gradient(135deg, #c0392b, #8b0000);
+  border-color: #e74c3c;
+  box-shadow: 0 2px 6px rgba(192, 57, 43, 0.4);
 }
 
 .promptlens-tag-chip.add-tag {
-  color: #444;
+  color: #555;
   border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .promptlens-tag-chip.add-tag:hover {
   color: #e74c3c;
-  border-color: rgba(231, 76, 60, 0.35);
-  background: rgba(231, 76, 60, 0.06);
+  border-color: #c0392b;
+  background: rgba(192, 57, 43, 0.05);
 }
 
 /* ─── 内容区 ─── */
 .promptlens-panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 14px;
+  padding: 16px 18px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(192, 57, 43, 0.3) transparent;
+  scrollbar-color: #444 transparent;
 }
 
 .promptlens-panel-content::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .promptlens-panel-content::-webkit-scrollbar-track {
@@ -387,12 +380,12 @@
 }
 
 .promptlens-panel-content::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #8b1a1a, #c0392b);
-  border-radius: 4px;
+  background: #333;
+  border-radius: 6px;
 }
 
 .promptlens-panel-content::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #c0392b, #e74c3c);
+  background: #c0392b; /* 滚动条悬浮泛红 */
 }
 
 /* 空状态 */
@@ -401,27 +394,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
-  color: #444;
+  padding: 60px 20px;
+  color: #555;
   text-align: center;
 }
 
 .promptlens-empty-state-icon {
-  font-size: 36px;
-  margin-bottom: 12px;
+  font-size: 42px;
+  margin-bottom: 16px;
   opacity: 0.4;
-  animation: promptlens-float 3s ease-in-out infinite;
-}
-
-@keyframes promptlens-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  color: #c0392b;
+  text-shadow: 0 0 12px rgba(192, 57, 43, 0.2);
 }
 
 .promptlens-empty-state-text {
-  font-size: 13px;
-  line-height: 1.7;
-  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
 }
 
 /* ─── 底部状态栏 ─── */
@@ -429,19 +418,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 14px;
-  font-size: 11px;
-  color: #444;
+  padding: 8px 18px;
+  font-size: 12px;
+  color: #666;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
   user-select: none;
-  background: rgba(0, 0, 0, 0.2);
 }
 
 .promptlens-panel-statusbar-left {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   overflow: hidden;
 }
@@ -450,226 +439,176 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 180px;
+  max-width: 220px;
 }
 
+/* 状态点由绿色改为幽灵白，符合暗黑调性 */
 .promptlens-panel-statusbar-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #27ae60;
+  background: #aaa;
+  box-shadow: 0 0 6px rgba(255,255,255,0.3);
   flex-shrink: 0;
-  box-shadow: 0 0 6px rgba(39, 174, 96, 0.6);
-  animation: promptlens-status-pulse 2.5s ease-in-out infinite;
 }
 
-@keyframes promptlens-status-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* ─── 笔记卡片 ─── */
-.promptlens-note-card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  border-left: 3px solid transparent;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
+/* ─── 卡片通用高质感 (笔记 & 快照) ─── */
+.promptlens-note-card,
+.promptlens-snapshot-card {
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.6), rgba(13, 13, 13, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
   position: relative;
-  transition:
-    border-color 0.25s ease,
-    border-left-color 0.25s ease,
-    background 0.25s ease,
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.25s ease;
-  animation: promptlens-card-in 0.3s ease both;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 卡片入场动画 stagger 由 JS 通过 animation-delay 控制 */
-@keyframes promptlens-card-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.promptlens-note-card:hover {
-  border-left-color: #c0392b;
-  border-color: rgba(192, 57, 43, 0.2);
-  background: rgba(255, 255, 255, 0.045);
-  transform: translateX(2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), -2px 0 8px rgba(192, 57, 43, 0.1);
+.promptlens-note-card:hover,
+.promptlens-snapshot-card:hover {
+  border-color: rgba(231, 76, 60, 0.4);
+  background: linear-gradient(145deg, rgba(30, 30, 30, 0.8), rgba(15, 15, 15, 0.9));
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(192, 57, 43, 0.15);
+  transform: translateY(-2px);
 }
 
 .promptlens-note-card.editing {
-  border-left-color: #e74c3c;
-  border-color: rgba(192, 57, 43, 0.4);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+  border-color: #e74c3c;
+  background: rgba(192, 57, 43, 0.05);
+  box-shadow: 0 0 0 1px #e74c3c inset;
 }
 
 .promptlens-card-content {
-  font-size: 13px;
-  line-height: 1.65;
-  color: #c8c8c8;
+  font-size: 14px; /* 增大字号提升可读性 */
+  line-height: 1.7; /* 舒服的行高 */
+  color: #d1d1d1;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
-  margin-bottom: 8px;
-  transition: all 0.25s ease;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
 }
 
-/* 展开状态 */
+/* ★ 展开状态 */
 .promptlens-card-content.expanded {
   -webkit-line-clamp: unset;
   display: block;
 }
 
 .promptlens-card-meta {
-  font-size: 11px;
-  color: #555;
-  margin-bottom: 4px;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .promptlens-card-source {
-  color: #555;
+  color: #888;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .promptlens-card-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 6px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .promptlens-card-tag {
   display: inline-block;
-  padding: 1px 8px;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 500;
-  color: #c0392b;
-  background: rgba(192, 57, 43, 0.09);
-  border: 1px solid rgba(192, 57, 43, 0.18);
-  transition: background 0.2s, transform 0.15s;
-}
-
-.promptlens-card-tag:hover {
-  background: rgba(192, 57, 43, 0.16);
-  transform: scale(1.05);
-}
-
-/* 思维链标签特殊样式 */
-.promptlens-card-tag[data-tag="思维链"],
-.promptlens-card-tag.thinking-tag {
-  color: #9b59b6;
-  background: rgba(155, 89, 182, 0.1);
-  border-color: rgba(155, 89, 182, 0.25);
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: rgba(192, 57, 43, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  letter-spacing: 0.5px;
 }
 
 .promptlens-card-actions {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   justify-content: flex-end;
-  margin-top: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.promptlens-note-card:hover .promptlens-card-actions,
-.promptlens-snapshot-card:hover .promptlens-card-actions {
-  opacity: 1;
+  margin-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.05);
+  padding-top: 8px;
 }
 
 .promptlens-card-actions button {
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid transparent;
+  color: #999;
   font-size: 14px;
   cursor: pointer;
-  padding: 3px 7px;
-  border-radius: 5px;
-  color: #666;
-  transition: color 0.2s, background 0.2s, transform 0.15s;
+  padding: 4px 8px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition: all 0.2s ease;
+}
+
+.promptlens-note-card:hover .promptlens-card-actions button,
+.promptlens-snapshot-card:hover .promptlens-card-actions button {
+  opacity: 0.8;
 }
 
 .promptlens-card-actions button:hover {
-  color: #ccc;
-  background: rgba(255, 255, 255, 0.08);
-  transform: scale(1.15);
+  opacity: 1 !important;
+  background: rgba(231, 76, 60, 0.15);
+  border-color: rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
 }
 
-.promptlens-card-actions button:active {
-  transform: scale(0.9);
-}
-
-/* ─── 快照卡片 ─── */
-.promptlens-snapshot-card {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  border-left: 3px solid transparent;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  position: relative;
-  transition:
-    border-color 0.25s ease,
-    border-left-color 0.25s ease,
-    background 0.25s ease,
-    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.25s ease;
-  animation: promptlens-card-in 0.3s ease both;
-}
-
-.promptlens-snapshot-card:hover {
-  border-left-color: #c0392b;
-  border-color: rgba(192, 57, 43, 0.2);
-  background: rgba(255, 255, 255, 0.045);
-  transform: translateX(2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), -2px 0 8px rgba(192, 57, 43, 0.1);
-}
-
+/* ─── 快照专属细节 ─── */
 .promptlens-snap-header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .promptlens-snap-icon {
-  font-size: 14px;
+  font-size: 16px;
+  color: #c0392b;
 }
 
 .promptlens-snap-preset {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #e74c3c;
+  letter-spacing: 0.5px;
 }
 
 .promptlens-snap-info {
   font-size: 12px;
   color: #888;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .promptlens-snap-entries {
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #999;
+  background: rgba(0,0,0,0.2);
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 2px solid #555;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
 }
 
-/* 条目展开状态 */
+/* ★ 条目展开状态 */
 .promptlens-snap-entries.expanded {
   -webkit-line-clamp: unset;
   display: block;
@@ -678,44 +617,42 @@
 .promptlens-snap-rating {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .promptlens-stars {
   display: flex;
-  gap: 1px;
+  gap: 2px;
 }
 
 .promptlens-star {
   font-size: 16px;
-  color: #2a2a2a;
+  color: #333; /* 暗黑星空 */
   cursor: pointer;
-  transition: color 0.15s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: color 0.2s, transform 0.2s;
   user-select: none;
 }
 
 .promptlens-star:hover {
-  transform: scale(1.3);
+  transform: scale(1.2);
 }
 
-.promptlens-star:active {
-  transform: scale(0.9);
-}
-
+/* 抛弃原版的橙色星星，采用血红/亮红 */
 .promptlens-star.filled {
-  color: #e67e22;
-  filter: drop-shadow(0 0 3px rgba(230, 126, 34, 0.5));
+  color: #e74c3c;
+  text-shadow: 0 0 6px rgba(231, 76, 60, 0.5);
 }
 
 .promptlens-snap-note {
-  font-size: 12px;
-  color: #777;
+  font-size: 13px;
+  color: #aaa;
   font-style: italic;
+  line-height: 1.5;
 }
 
 .promptlens-snap-note-placeholder {
-  color: #444;
+  color: #555;
   font-style: italic;
 }
 
@@ -724,37 +661,44 @@
   transition: color 0.2s;
   flex: 1;
   min-width: 0;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.promptlens-snap-note-edit:hover {
+  background: rgba(255,255,255,0.03);
 }
 
 .promptlens-snap-note-edit:hover .promptlens-snap-note {
-  color: #bbb;
+  color: #ccc;
 }
 
 .promptlens-snap-note-edit:hover .promptlens-snap-note-placeholder {
-  color: #777;
+  color: #888;
 }
 
 .promptlens-snap-note-edit.editing {
   flex: 1;
+  background: transparent;
 }
 
 .promptlens-snap-note-input {
   width: 100%;
-  padding: 4px 8px;
-  border: 1px solid rgba(192, 57, 43, 0.3);
+  padding: 6px 10px;
+  border: 1px solid rgba(231, 76, 60, 0.4);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #ccc;
-  font-size: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  color: #eee;
+  font-size: 13px;
   font-style: italic;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .promptlens-snap-note-input:focus {
-  border-color: rgba(192, 57, 43, 0.55);
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+  border-color: #e74c3c;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 0 2px rgba(231,76,60,0.2);
 }
 
 /* ─── 当前环境摘要 ─── */
@@ -762,255 +706,223 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  margin-bottom: 10px;
-  background: rgba(192, 57, 43, 0.05);
-  border: 1px solid rgba(192, 57, 43, 0.12);
-  border-left: 3px solid rgba(192, 57, 43, 0.5);
-  border-radius: 8px;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, rgba(192, 57, 43, 0.1), rgba(0,0,0,0));
+  border: 1px solid rgba(192, 57, 43, 0.2);
+  border-left: 3px solid #c0392b;
+  border-radius: 6px;
 }
 
 .promptlens-env-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #c0392b;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e74c3c;
   margin-right: 4px;
 }
 
 .promptlens-env-item {
   font-size: 11px;
-  color: #888;
-  padding: 1px 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #aaa;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* ─── 编辑表单样式 ─── */
 .promptlens-edit-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .promptlens-edit-textarea {
   width: 100%;
-  padding: 8px 10px;
-  border: 1px solid rgba(192, 57, 43, 0.25);
+  padding: 10px 12px;
+  border: 1px solid rgba(192, 57, 43, 0.4);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #ccc;
-  font-size: 13px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #eee;
+  font-size: 14px;
   line-height: 1.6;
   resize: vertical;
   outline: none;
   font-family: inherit;
-  min-height: 60px;
+  min-height: 80px;
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  transition: border 0.3s;
 }
 
 .promptlens-edit-textarea:focus {
-  border-color: rgba(192, 57, 43, 0.55);
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+  border-color: #e74c3c;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 2px rgba(231,76,60,0.15);
 }
 
 .promptlens-edit-tags-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 4px 0;
 }
 
 .promptlens-edit-tags-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #777;
+  color: #888;
 }
 
 .promptlens-edit-tags-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .promptlens-edit-tag-label {
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  color: #777;
-  background: rgba(  255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #999;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   user-select: none;
 }
 
 .promptlens-edit-tag-label:hover {
-  color: #bbb;
+  color: #eee;
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .promptlens-edit-tag-label input[type="checkbox"] {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   margin: 0;
   accent-color: #c0392b;
   cursor: pointer;
 }
 
 .promptlens-edit-tag-label:has(input:checked) {
-  color: #e74c3c;
-  background: rgba(231, 76, 60, 0.12);
-  border-color: rgba(231, 76, 60, 0.3);
+  color: #fff;
+  background: rgba(192, 57, 43, 0.2);
+  border-color: #e74c3c;
+  box-shadow: 0 0 8px rgba(192, 57, 43, 0.2);
 }
 
 .promptlens-edit-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .promptlens-edit-save {
-  padding: 5px 16px;
+  padding: 6px 20px;
   border-radius: 6px;
-  border: 1px solid rgba(192, 57, 43, 0.45);
-  background: rgba(192, 57, 43, 0.14);
-  color: #e74c3c;
-  font-size: 12px;
+  border: 1px solid #c0392b;
+  background: linear-gradient(180deg, rgba(231,76,60,0.2), rgba(192,57,43,0.1));
+  color: #ff6b6b;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition: all 0.2s;
 }
 
 .promptlens-edit-save:hover {
-  background: rgba(192, 57, 43, 0.26);
-  box-shadow: 0 0 10px rgba(192, 57, 43, 0.2);
-  transform: translateY(-1px);
-}
-
-.promptlens-edit-save:active {
-  transform: scale(0.96);
+  background: #c0392b;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.4);
 }
 
 .promptlens-edit-cancel {
-  padding: 5px 16px;
+  padding: 6px 20px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
-  color: #888;
-  font-size: 12px;
+  color: #aaa;
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: all 0.2s;
 }
 
 .promptlens-edit-cancel:hover {
-  background: rgba(255, 255, 255, 0.07);
-  transform: translateY(-1px);
-}
-
-.promptlens-edit-cancel:active {
-  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.08);
+  color: #eee;
 }
 
 /* ─── 新建笔记 / 快照捕获表单 ─── */
 .promptlens-form-wrapper {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .promptlens-new-note-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
-  background: rgba(192, 57, 43, 0.04);
-  border: 1px solid rgba(192, 57, 43, 0.18);
-  border-radius: 10px;
-  animation: promptlens-form-in 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(145deg, rgba(192, 57, 43, 0.08), rgba(0,0,0,0.3));
+  border: 1px solid rgba(192, 57, 43, 0.3);
+  border-radius: 12px;
+  animation: promptlens-form-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);
 }
 
 .promptlens-form-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
   color: #e74c3c;
+  letter-spacing: 0.5px;
 }
 
 /* ─── 快照捕获预览 ─── */
 .promptlens-capture-preview {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.055);
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .promptlens-capture-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: 10px;
+  font-size: 13px;
 }
 
 .promptlens-capture-label {
   color: #777;
-  font-weight: 500;
-  min-width: 36px;
+  font-weight: 600;
+  min-width: 40px;
 }
 
 .promptlens-capture-value {
-  color: #ccc;
-  font-weight: 600;
-}
-
-.promptlens-capture-note-input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  color: #ccc;
-  font-size: 12px;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.promptlens-capture-note-input:focus {
-  border-color: rgba(192, 57, 43, 0.45);
-  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+  color: #d1d1d1;
+  font-weight: 500;
 }
 
 @keyframes promptlens-form-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ─── 气泡弹入动画 ─── */
 @keyframes promptlens-bubble-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.88);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ─── 移动端适配 ─── */
+/* ─── 移动端适配 (微调间距) ─── */
 @media (max-width: 768px) {
   #promptlens-panel {
     width: calc(100vw - 16px) !important;
@@ -1022,7 +934,7 @@
     top: 50px !important;
     right: auto !important;
     bottom: auto !important;
-    border-radius: 10px;
+    border-radius: 12px;
     resize: none;
   }
 
@@ -1031,466 +943,315 @@
     height: 44px;
   }
 
-  #promptlens-fab .promptlens-fab-icon {
-    font-size: 20px;
-  }
-
-  .promptlens-panel-titlebar {
-    padding: 8px 10px 6px;
-  }
-
-  .promptlens-panel-toolbar {
-    padding: 6px 10px;
-  }
-
-  .promptlens-panel-tags {
-    padding: 4px 10px;
-  }
-
-  .promptlens-panel-content {
-    padding: 8px 10px;
-  }
-
-  .promptlens-panel-statusbar {
-    padding: 5px 10px;
-  }
-
-  .promptlens-panel-tab {
-    padding: 3px 8px;
-    font-size: 11px;
-  }
-
-  .promptlens-search-input {
-    font-size: 14px; /* 防止 iOS 自动缩放 */
-  }
+  .promptlens-panel-titlebar { padding: 10px 14px; }
+  .promptlens-panel-toolbar { padding: 8px 14px; }
+  .promptlens-panel-tags { padding: 8px 14px; }
+  .promptlens-panel-content { padding: 12px 14px; }
+  .promptlens-panel-statusbar { padding: 6px 14px; }
+  .promptlens-search-input { font-size: 16px; /* 防止 iOS 自动缩放 */ }
 }
-/* ═══ 移动端适配 结束 ═══ */
 
 /* ═══════════════════════════════════════════════════════════
-   快照 Diff 对比 — 样式
+   快照 Diff 对比 — 暗黑血刃样式
    ═══════════════════════════════════════════════════════════ */
 
-/* 对比选择模式提示条 */
+/* 对比选择模式提示条 (去除了橙色，改为暗红警告风格) */
 .promptlens-diff-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background: rgba(230, 126, 34, 0.12);
-  border: 1px solid rgba(230, 126, 34, 0.35);
-  border-radius: 8px;
-  animation: promptlens-diff-bar-pulse 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, rgba(192, 57, 43, 0.2), rgba(0,0,0,0.2));
+    border: 1px solid rgba(192, 57, 43, 0.5);
+    border-radius: 8px;
+    animation: promptlens-diff-bar-pulse 2s ease-in-out infinite;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 @keyframes promptlens-diff-bar-pulse {
-  0%, 100% { border-color: rgba(230, 126, 34, 0.35); }
-  50% { border-color: rgba(230, 126, 34, 0.75); }
+    0%, 100% { border-color: rgba(192, 57, 43, 0.4); box-shadow: 0 0 4px rgba(192, 57, 43, 0); }
+    50% { border-color: #e74c3c; box-shadow: 0 0 12px rgba(231, 76, 60, 0.3); }
 }
 
 .promptlens-diff-bar-text {
-  font-size: 12px;
-  color: #e67e22;
-  flex: 1;
-  margin-right: 8px;
+    font-size: 13px;
+    color: #ff6b6b;
+    font-weight: 600;
+    flex: 1;
+    margin-right: 12px;
+    letter-spacing: 0.5px;
 }
 
 .promptlens-diff-bar-cancel {
-  background: none;
-  border: 1px solid rgba(230, 126, 34, 0.45);
-  color: #e67e22;
-  padding: 3px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  white-space: nowrap;
-  transition: all 0.2s;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(192, 57, 43, 0.5);
+    color: #e74c3c;
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
 }
 
 .promptlens-diff-bar-cancel:hover {
-  background: rgba(230, 126, 34, 0.18);
-  border-color: #e67e22;
+    background: #c0392b;
+    color: #fff;
+    border-color: #e74c3c;
 }
 
-/* 快照卡片 — 对比选中高亮 */
+/* 快照卡片 — 对比选中高亮 (暗红发光) */
 .promptlens-snapshot-card.diff-selected {
-  border-color: #e67e22 !important;
-  border-left-color: #e67e22 !important;
-  box-shadow: 0 0 0 2px rgba(230, 126, 34, 0.25), 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* 对比按钮 */
-.promptlens-snap-diff-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 4px;
-  border-radius: 4px;
-  opacity: 0.45;
-  transition: all 0.2s, transform 0.15s;
-}
-
-.promptlens-snap-diff-btn:hover {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.07);
-  transform: scale(1.15);
+    border-color: #e74c3c !important;
+    background: linear-gradient(145deg, rgba(40, 15, 15, 0.8), rgba(20, 10, 10, 0.9)) !important;
+    box-shadow: 0 0 0 1px #e74c3c, 0 4px 16px rgba(192, 57, 43, 0.4) !important;
+    transform: translateY(-2px);
 }
 
 /* ═══ Diff 视图 ═══ */
-
 .promptlens-diff-view {
-  padding: 4px;
+    padding: 4px;
 }
 
 /* 顶部标题栏 */
 .promptlens-diff-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
 .promptlens-diff-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ddd;
+    font-size: 15px;
+    font-weight: 700;
+    color: #eee;
+    letter-spacing: 0.5px;
 }
 
-.promptlens-diff-close {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #888;
-  padding: 3px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-  transition: all 0.2s;
-}
-
-.promptlens-diff-close:hover {
-  color: #e74c3c;
-  border-color: rgba(231, 76, 60, 0.4);
-  background: rgba(231, 76, 60, 0.08);
-}
-
-/* 总结条 */
+/* 总结条 (移除绿色 identical，改为冷酷灰白) */
 .promptlens-diff-summary {
-  text-align: center;
-  padding: 8px;
-  margin-bottom: 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .promptlens-diff-summary.identical {
-  background: rgba(39, 174, 96, 0.1);
-  color: #27ae60;
-  border: 1px solid rgba(39, 174, 96, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .promptlens-diff-summary.different {
-  background: rgba(230, 126, 34, 0.1);
-  color: #e67e22;
-  border: 1px solid rgba(230, 126, 34, 0.25);
+    background: rgba(192, 57, 43, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(231, 76, 60, 0.3);
 }
 
 /* A / B 列头 */
 .promptlens-diff-columns {
-  margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .promptlens-diff-col-header {
-  display: flex;
-  gap: 8px;
+    display: flex;
+    gap: 10px;
 }
 
 .promptlens-diff-col {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .promptlens-diff-col.a {
-  border-left: 3px solid #c0392b;
+    border-left: 3px solid #666; /* 旧版用灰色 */
 }
 
 .promptlens-diff-col.b {
-  border-left: 3px solid #27ae60;
+    border-left: 3px solid #e74c3c; /* 新版用红色强调 */
 }
 
 .promptlens-diff-col-label {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align: center;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  margin-right: 6px;
-  color: #fff;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    margin-right: 8px;
+    color: #fff;
 }
 
-.promptlens-diff-col.a .promptlens-diff-col-label {
-  background: #c0392b;
-}
-
-.promptlens-diff-col.b .promptlens-diff-col-label {
-  background: #27ae60;
-}
+.promptlens-diff-col.a .promptlens-diff-col-label { background: #555; }
+.promptlens-diff-col.b .promptlens-diff-col-label { background: #c0392b; box-shadow: 0 0 6px rgba(192,57,43,0.5); }
 
 .promptlens-diff-col-name {
-  font-size: 12px;
-  color: #ccc;
-  font-weight: 500;
-}
-
-.promptlens-diff-col-time {
-  font-size: 10px;
-  color: #555;
-  margin-left: 6px;
+    font-size: 13px;
+    color: #ccc;
+    font-weight: 600;
 }
 
 /* 分区 */
 .promptlens-diff-section {
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .promptlens-diff-section-title {
-  font-size: 11px;
-  color: #777;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
 }
 
-/* 条目计数标签 */
-.promptlens-diff-entry-count {
-  display: flex;
-  gap: 6px;
-  font-size: 10px;
-}
-
-.promptlens-diff-entry-count .added {
-  color: #27ae60;
-}
-
-.promptlens-diff-entry-count .removed {
-  color: #e74c3c;
-}
-
-.promptlens-diff-entry-count .unchanged {
-  color: #555;
-}
+/* 条目计数标签 (严格控制颜色：仅新增使用克制的暗绿，删除用深红) */
+.promptlens-diff-entry-count .added { color: #4cd137; opacity: 0.8; }
+.promptlens-diff-entry-count .removed { color: #e74c3c; }
+.promptlens-diff-entry-count .unchanged { color: #666; }
 
 /* 字段对比行 */
 .promptlens-diff-field {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 12px;
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    gap: 8px;
 }
 
 .promptlens-diff-field + .promptlens-diff-field {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
 }
 
 .promptlens-diff-field-label {
-  width: 36px;
-  flex-shrink: 0;
-  color: #666;
-  font-size: 11px;
+    width: 40px;
+    flex-shrink: 0;
+    color: #777;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .promptlens-diff-field-val {
-  color: #aaa;
-  word-break: break-all;
+    color: #ccc;
+    word-break: break-all;
+    line-height: 1.4;
 }
 
 .promptlens-diff-field.changed .promptlens-diff-field-val.old {
-  color: #e74c3c;
-  text-decoration: line-through;
-  opacity: 0.7;
+    color: #777;
+    text-decoration: line-through;
+    opacity: 0.6;
 }
 
 .promptlens-diff-field.changed .promptlens-diff-field-val.new {
-  color: #27ae60;
-  font-weight: 500;
-}
-
-.promptlens-diff-field-arrow {
-  color: #555;
-  font-size: 11px;
-  flex-shrink: 0;
+    color: #ff6b6b;
+    font-weight: 600;
 }
 
 .promptlens-diff-field.same .promptlens-diff-field-val {
-  color: #777;
+    color: #999;
 }
 
 /* 条目差异列表 */
 .promptlens-diff-entries {
-  max-height: 200px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(192, 57, 43, 0.25) transparent;
-}
-
-.promptlens-diff-entries::-webkit-scrollbar {
-  width: 3px;
-}
-
-.promptlens-diff-entries::-webkit-scrollbar-thumb {
-  background: rgba(192, 57, 43, 0.3);
-  border-radius: 3px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #444 transparent;
 }
 
 .promptlens-diff-entry {
-  display: flex;
-  align-items: center;
-  padding: 3px 6px;
-  font-size: 11px;
-  border-radius: 3px;
-  margin-bottom: 2px;
-  gap: 6px;
-  transition: background 0.15s;
-}
-
-.promptlens-diff-entry-icon {
-  width: 14px;
-  height: 14px;
-  line-height: 14px;
-  text-align: center;
-  border-radius: 3px;
-  font-size: 12px;
-  font-weight: 700;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    gap: 8px;
 }
 
 .promptlens-diff-entry.added {
-  background: rgba(39, 174, 96, 0.09);
-  color: #27ae60;
-}
-
-.promptlens-diff-entry.added .promptlens-diff-entry-icon {
-  color: #27ae60;
+    background: rgba(46, 74, 53, 0.4); /* 暗绿底，不破坏暗黑感 */
+    color: #7bed9f;
+    border-left: 2px solid #2ecc71;
 }
 
 .promptlens-diff-entry.removed {
-  background: rgba(231, 76, 60, 0.09);
-  color: #e74c3c;
-}
-
-.promptlens-diff-entry.removed .promptlens-diff-entry-icon {
-  color: #e74c3c;
+    background: rgba(192, 57, 43, 0.15); /* 猩红底 */
+    color: #ff6b6b;
+    text-decoration: line-through;
+    opacity: 0.8;
+    border-left: 2px solid #e74c3c;
 }
 
 .promptlens-diff-entry.unchanged {
-  color: #555;
-}
-
-.promptlens-diff-entry.unchanged .promptlens-diff-entry-icon {
-  color: #444;
-}
-
-/* 评分对比行 */
-.promptlens-diff-rating-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.promptlens-diff-rating-label {
-  width: 16px;
-  height: 16px;
-  line-height: 16px;
-  text-align: center;
-  border-radius: 3px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  background: #444;
-}
-
-.promptlens-diff-rating-stars {
-  color: #e67e22;
-  letter-spacing: 1px;
-}
-
-.promptlens-diff-rating-stars.none {
-  color: #444;
-  font-size: 11px;
+    color: #888;
+    background: rgba(255,255,255,0.02);
 }
 
 /* ★ 楼层跳转链接 */
 .promptlens-card-floor-link {
-  color: #c0392b;
-  cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
-  transition: color 0.15s, text-shadow 0.15s;
+    color: #e74c3c;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    transition: all 0.2s ease;
+    font-weight: 600;
 }
 
 .promptlens-card-floor-link:hover {
-  color: #e74c3c;
-  text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+    color: #ff4d4d;
+    text-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
 }
 
-/* ★ 楼层高亮（跳转后短暂闪烁） */
+/* ★ 楼层高亮（跳转后短暂闪烁猩红） */
 .mes.promptlens-floor-highlight {
-  animation: promptlens-floor-flash 1.5s ease forwards;
+    animation: promptlens-floor-flash 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes promptlens-floor-flash {
-  0%   {
-    box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.9);
-    background: rgba(231, 76, 60, 0.1);
-  }
-  60%  {
-    box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.4);
-    background: rgba(231, 76, 60, 0.04);
-  }
-  100% {
-    box-shadow: none;
-    background: transparent;
-  }
+    0%   { box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.9); background: rgba(231, 76, 60, 0.15); transform: scale(1.01); }
+    50%  { box-shadow: inset 0 0 0 2px rgba(231, 76, 60, 0.5); background: rgba(231, 76, 60, 0.05); transform: scale(1); }
+    100% { box-shadow: none; background: transparent; }
 }
 
 /* ★ 思维链收藏按钮 */
 .promptlens-thinking-btn {
-  cursor: pointer;
-  font-size: 14px;
-  opacity: 0.55;
-  transition: opacity 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s;
-  user-select: none;
+    cursor: pointer;
+    font-size: 15px;
+    opacity: 0.5;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    user-select: none;
+    color: #fff;
 }
 
 .promptlens-thinking-btn:hover {
-  opacity: 1;
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 5px rgba(155, 89, 182, 0.7));
-}
-
-.promptlens-thinking-btn:active {
-  transform: scale(0.9);
+    opacity: 1;
+    color: #e74c3c;
+    transform: scale(1.2) rotate(-5deg);
+    text-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
 }
 
 
