@@ -324,48 +324,117 @@
             }
         },
 
-        /** 导出笔记为Markdown 文件 */
-        exportMarkdown() {
-            try {
-                let md = `# 📓 PromptLens · 掠影 — 笔记导出\n\n`;
-                md += `> 导出时间: ${new Date().toLocaleString()}\n\n`;
-                md += `---\n\n`;
+        
+      /** 导出笔记为 Markdown 文件（按标签分组，思维链特殊格式） */
+exportMarkdown() {
+    try {
+        const notes = this._data.notes;
+        const date = new Date().toISOString().slice(0, 10);
+        const now = new Date().toLocaleString();
 
-                const notes = this._data.notes;
-                if (notes.length === 0) {
-                    md += `_暂无笔记_\n`;
+        // ── 文件头 ──
+        let md = `# 📓 PromptLens · 掠影 — 笔记导出\n\n`;
+        md += `> 导出时间：${now}  \n`;
+        md += `> 笔记总数：${notes.length} 条\n\n`;
+        md += `---\n\n`;
+
+        if (notes.length === 0) {
+            md += `_暂无笔记_\n`;
+        } else {
+            // ── 按标签分组 ──
+            // 1. 收集所有出现的标签（保持 Storage.getTags() 顺序）
+            const allTags = this._data.tags || [];
+            // 2. 无标签的笔记单独归入"未分类"
+            const groups = {}; // tag → note[]
+            const untagged = [];
+
+            notes.forEach(note => {
+                if (!note.tags || note.tags.length === 0) {
+                    untagged.push(note);
                 } else {
-                    notes.forEach((note, i) => {
-                        md += `## 笔记 #${i + 1}\n\n`;
-                        md += `${note.content}\n\n`;
-                        if (note.tags && note.tags.length > 0) {
-                            md += `**标签:** ${note.tags.map(t => '`' + t + '`').join(' ')}\n\n`;
-                        }
-                        if (note.sourceFloor != null) {
-                            md += `**来源:** 楼层 #${note.sourceFloor}\n\n`;
-                        }
-                        md += `**时间:** ${new Date(note.createdAt).toLocaleString()}\n\n`;
-                        md += `---\n\n`;
+                    note.tags.forEach(tag => {
+                        if (!groups[tag]) groups[tag] = [];
+                        // 同一笔记可能有多个标签，每个分组都放一份引用
+                        if (!groups[tag].includes(note)) groups[tag].push(note);
                     });
                 }
+            });
 
-                const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                const date = new Date().toISOString().slice(0, 10);
-                a.href = url;
-                a.download = `PromptLens_notes_${date}.md`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+            // ── 渲染单条笔记 ──
+            const renderNote = (note, index) => {
+                const isThinking = note.tags && note.tags.includes('思维链');
+                let block = '';
 
-                const sizeKB = (blob.size / 1024).toFixed(1);
-                Logger.success(`Markdown 导出成功 — PromptLens_notes_${date}.md (${sizeKB} KB)`);
-            } catch (err) {
-                Logger.error('Markdown 导出失败', err);
+                if (isThinking) {
+                    // 思维链笔记：特殊块格式
+                    block += `### 🧠 思维链 #${index + 1}\n\n`;
+                    block += `> ${note.content.replace(/\n/g, '\n> ')}\n\n`;
+                } else {
+                    block += `### 📌 笔记 #${index + 1}\n\n`;
+                    block += `${note.content}\n\n`;
+                }
+
+                if (note.tags && note.tags.length > 0) {
+                    block += `**标签：** ${note.tags.map(t => `\`${t}\``).join(' ')}\n\n`;
+                }
+                if (note.sourceFloor != null) {
+                    block += `**来源：** 楼层 #${note.sourceFloor}\n\n`;
+                }
+                block += `**时间：** ${new Date(note.createdAt).toLocaleString()}\n\n`;
+                block += `---\n\n`;
+                return block;
+            };
+
+            // ── 按标签顺序输出分组 ──
+            // 先输出有标签的分组（按 allTags 顺序）
+            const renderedNoteIds = new Set();
+
+            allTags.forEach(tag => {
+                if (!groups[tag] || groups[tag].length === 0) return;
+                md += `## 🏷️ ${tag}（${groups[tag].length} 条）\n\n`;
+                groups[tag].forEach((note, i) => {
+                    md += renderNote(note, i);
+                    renderedNoteIds.add(note.id);
+                });
+            });
+
+            // 处理不在 allTags 中的自定义标签（容错）
+            Object.keys(groups).forEach(tag => {
+                if (allTags.includes(tag)) return;
+                if (!groups[tag] || groups[tag].length === 0) return;
+                md += `## 🏷️ ${tag}（${groups[tag].length} 条）\n\n`;
+                groups[tag].forEach((note, i) => {
+                    md += renderNote(note, i);
+                    renderedNoteIds.add(note.id);
+                });
+            });
+
+            // 未分类
+            if (untagged.length > 0) {
+                md += `## 📂 未分类（${untagged.length} 条）\n\n`;
+                untagged.forEach((note, i) => {
+                    md += renderNote(note, i);
+                });
             }
-        },
+        }
+
+        // ── 下载 ──
+        const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `PromptLens_notes_${date}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        const sizeKB = (blob.size / 1024).toFixed(1);
+        Logger.success(`Markdown 导出成功 — PromptLens_notes_${date}.md (${sizeKB} KB)，共 ${notes.length} 条笔记`);
+    } catch (err) {
+        Logger.error('Markdown 导出失败', err);
+    }
+},
 
         /** 导入JSON 文件（合并模式） */
         importJSON(file) {
