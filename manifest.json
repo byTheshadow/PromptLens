@@ -1,12 +1,14 @@
 {
   "display_name": "PromptLens 掠影",
-  "loading_order": 10,
+  "loading_order": 100,
   "requires": [],
   "optional": [],
   "js": "index.js",
   "css": "style.css",
+  "settings": "settings.html",
   "author": "Shadow",
   "version": "0.1.0",
   "homePage": "https://github.com/Shadow/PromptLens",
+  "auto_update": false,
   "description": "预设工程师的读书笔记插件 — 笔记、收藏、快照一体化"
 }
